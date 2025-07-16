@@ -3,6 +3,8 @@ import requests
 import json
 import re
 import hashlib
+import time
+from requests.exceptions import HTTPError
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
@@ -11,6 +13,9 @@ HEADERS = {
 }
 
 PHRASES = ["not currently accepting"]
+
+MAX_RETRIES = 5
+BACKOFF = 2
 
 with open('database.json', 'r') as infile:
     database = json.load(infile)
@@ -22,8 +27,27 @@ for item in database['funds']:
 
     old_checksum = item["checksum"]
     
-    response = requests.get(item["url"], headers=HEADERS)
-    soup = BeautifulSoup(response.text, "html.parser")
+    skip = False
+    for attempt in range(MAX_RETRIES):
+        try:
+            response = requests.get(item["url"], headers=HEADERS)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+        except HTTPError as e:
+            if e.response.status_code == 412:
+                print(f'Error 412. Skipping "{item["url"]}"...')
+                skip = True
+                break
+            wait_time = BACKOFF ** attempt
+            print(f"HTTP error: {e}. Retrying in {wait_time} seconds...")
+            time.sleep(wait_time)
+        except Exception as e:
+            print(f'Failed to reach URL: {item["url"]}. Error: {e}. Skipping...')
+            skip = True
+            break
+    
+    if skip:
+        continue
 
     if (item["status"] == "open"):      # fund open
 
