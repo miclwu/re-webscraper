@@ -1,10 +1,17 @@
 from bs4 import BeautifulSoup
 import requests
-import json
+#import json
 import re
 import hashlib
 import time
 from requests.exceptions import HTTPError
+from utilities import csv_to_dict, dict_to_csv
+
+# TODO:
+# - add way to add/remove to PHRASES, FIELDNAMES(?)
+# - checksum checking for closed funds instead of only checking for phrase presence?
+# - proxies
+# - research ways to implement into current software or to send a notification of potential fund changes
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
@@ -13,14 +20,14 @@ HEADERS = {
 }
 
 PHRASES = ["not currently accepting"]
+FIELDNAMES = ["name", "url", "status", "checksum"]
 
 MAX_RETRIES = 5
 BACKOFF = 2
 
-with open('database.json', 'r') as infile:
-    database = json.load(infile)
+database = csv_to_dict('database.csv')
 
-for item in database['funds']:
+for item in database:
     assert(item["name"])
     assert(item["url"])
     assert(item["status"] == "open" or item["status"] == "closed" or item["status"] == "check required")
@@ -79,5 +86,4 @@ for item in database['funds']:
     else:                               # check required
         print(f'{item["name"]}, CHECK FUND')
     
-with open('database.json', 'w') as outfile:
-        json.dump(database, outfile, indent=4)
+dict_to_csv(database, 'database.csv', FIELDNAMES)
