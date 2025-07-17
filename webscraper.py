@@ -32,6 +32,7 @@ def get_soup(item, retries= 5, backoff= 2):
             soup = BeautifulSoup(response.text, "html.parser")
 
             return soup
+        
         except HTTPError as e:
             if e.response.status_code == 412:
                 print(f'Error 412. Skipping "{item["url"]}"...')
@@ -39,9 +40,11 @@ def get_soup(item, retries= 5, backoff= 2):
             wait_time = backoff ** attempt
             print(f"HTTP error: {e}. Retrying in {wait_time} seconds...")
             time.sleep(wait_time)
+            
         except Exception as e:
             print(f'Failed to reach URL: {item["url"]}. Error: {e}. Skipping...')
             return None
+
 def main():
     for item in database:
         assert(item["name"])
