@@ -42,47 +42,50 @@ def get_soup(item, retries= 5, backoff= 2):
         except Exception as e:
             print(f'Failed to reach URL: {item["url"]}. Error: {e}. Skipping...')
             return None
+def main():
+    for item in database:
+        assert(item["name"])
+        assert(item["url"])
+        assert(item["status"] == "open" or item["status"] == "closed" or item["status"] == "check required")
 
-for item in database:
-    assert(item["name"])
-    assert(item["url"])
-    assert(item["status"] == "open" or item["status"] == "closed" or item["status"] == "check required")
+        old_checksum = item["checksum"]
+        
+        soup = get_soup(item)
 
-    old_checksum = item["checksum"]
-    
-    soup = get_soup(item)
-    
-    if not soup:
-        continue
-
-    if (item["status"] == "open"):      # fund open
-
-        checksum = hashlib.sha256(soup.body.encode('utf-8')).hexdigest()
-
-        if (not old_checksum):
-            item["checksum"] = checksum
-            print(f'{item["name"]}, OPEN FUND: Adding new checksum.')
+        if not soup:
             continue
 
-        if checksum != old_checksum:
-            item["checksum"] = checksum
-            item["status"] = "check required"
-            print(f'{item["name"]}, OPEN FUND: Page change detected. Updating checksum. Check required.')
-        else:
-            print(f'{item["name"]}, OPEN FUND: Checksums match.')
+        if (item["status"] == "open"):      # fund open
 
-    elif (item["status"] == "closed"):  # fund closed
-        for p in PHRASES:
-            tags = soup.body.find_all(string=re.compile(p))
-            print(f'{item["name"]}, CLOSED FUND TAGS: {tags}')
-            if len(tags) > 0:
-                print(f'{item["name"]}, CLOSED FUND: Still closed.')
-                break
-        else:
-            print(f'{item["name"]}, CLOSED FUND: Check required.')
-            item["checksum"] = ""
-    
-    else:                               # check required
-        print(f'{item["name"]}, CHECK FUND')
-    
-dict_to_csv(database, 'database.csv', FIELDNAMES)
+            checksum = hashlib.sha256(soup.body.encode('utf-8')).hexdigest()
+
+            if (not old_checksum):
+                item["checksum"] = checksum
+                print(f'{item["name"]}, OPEN FUND: Adding new checksum.')
+                continue
+
+            if checksum != old_checksum:
+                item["checksum"] = checksum
+                item["status"] = "check required"
+                print(f'{item["name"]}, OPEN FUND: Page change detected. Updating checksum. Check required.')
+            else:
+                print(f'{item["name"]}, OPEN FUND: Checksums match.')
+
+        elif (item["status"] == "closed"):  # fund closed
+            for p in PHRASES:
+                tags = soup.body.find_all(string=re.compile(p))
+                print(f'{item["name"]}, CLOSED FUND TAGS: {tags}')
+                if len(tags) > 0:
+                    print(f'{item["name"]}, CLOSED FUND: Still closed.')
+                    break
+            else:
+                print(f'{item["name"]}, CLOSED FUND: Check required.')
+                item["checksum"] = ""
+        
+        else:                               # check required
+            print(f'{item["name"]}, CHECK FUND')
+        
+    dict_to_csv(database, 'database.csv', FIELDNAMES)
+
+if __name__ == "__main__":
+    main()
