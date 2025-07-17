@@ -10,7 +10,7 @@ def csv_to_dict(infile):
     return data
 
 def dict_to_csv(data, outfile, fieldnames):
-    with open(outfile, 'w') as f:
+    with open(outfile, 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames)
         
         writer.writeheader()
