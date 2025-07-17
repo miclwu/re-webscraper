@@ -22,10 +22,26 @@ HEADERS = {
 PHRASES = ["not currently accepting"]
 FIELDNAMES = ["name", "url", "status", "checksum"]
 
-MAX_RETRIES = 5
-BACKOFF = 2
-
 database = csv_to_dict('database.csv')
+
+def get_soup(item, retries= 5, backoff= 2):
+    for attempt in range(retries):
+        try:
+            response = requests.get(item["url"], headers=HEADERS)
+            response.raise_for_status()
+            soup = BeautifulSoup(response.text, "html.parser")
+
+            return soup
+        except HTTPError as e:
+            if e.response.status_code == 412:
+                print(f'Error 412. Skipping "{item["url"]}"...')
+                return None
+            wait_time = backoff ** attempt
+            print(f"HTTP error: {e}. Retrying in {wait_time} seconds...")
+            time.sleep(wait_time)
+        except Exception as e:
+            print(f'Failed to reach URL: {item["url"]}. Error: {e}. Skipping...')
+            return None
 
 for item in database:
     assert(item["name"])
@@ -34,26 +50,9 @@ for item in database:
 
     old_checksum = item["checksum"]
     
-    skip = False
-    for attempt in range(MAX_RETRIES):
-        try:
-            response = requests.get(item["url"], headers=HEADERS)
-            response.raise_for_status()
-            soup = BeautifulSoup(response.text, "html.parser")
-        except HTTPError as e:
-            if e.response.status_code == 412:
-                print(f'Error 412. Skipping "{item["url"]}"...')
-                skip = True
-                break
-            wait_time = BACKOFF ** attempt
-            print(f"HTTP error: {e}. Retrying in {wait_time} seconds...")
-            time.sleep(wait_time)
-        except Exception as e:
-            print(f'Failed to reach URL: {item["url"]}. Error: {e}. Skipping...')
-            skip = True
-            break
+    soup = get_soup(item)
     
-    if skip:
+    if not soup:
         continue
 
     if (item["status"] == "open"):      # fund open
