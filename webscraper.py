@@ -9,7 +9,8 @@ from utilities import csv_to_dict, dict_to_csv
 
 # TODO:
 # - add way to add/remove to PHRASES, FIELDNAMES(?)
-# - checksum checking for closed funds instead of only checking for phrase presence?
+# - checksum specific element(s) instead of checking <body>
+# - detect random binary data from response
 # - proxies
 # - research ways to implement into current software or to send a notification of potential fund changes
 
@@ -57,16 +58,15 @@ def main():
 
         if not soup:
             continue
+        
+        checksum = hashlib.sha256(soup.body.encode('utf-8')).hexdigest()
 
-        if (item["status"] == "open"):      # fund open
-
-            checksum = hashlib.sha256(soup.body.encode('utf-8')).hexdigest()
-
-            if (not old_checksum):
+        if not old_checksum:
                 item["checksum"] = checksum
-                print(f'{item["name"]}, OPEN FUND: Adding new checksum.')
+                print(f'{item["name"]}, {item["status"].upper()} FUND: Adding new checksum.')
                 continue
 
+        if item["status"] == "open":      # fund open
             if checksum != old_checksum:
                 item["checksum"] = checksum
                 item["status"] = "check required"
@@ -74,19 +74,32 @@ def main():
             else:
                 print(f'{item["name"]}, OPEN FUND: Checksums match.')
 
-        elif (item["status"] == "closed"):  # fund closed
+        elif item["status"] == "closed":  # fund closed
+            hasChecksumUpdated = False 
+
+            if checksum != old_checksum:
+                item["checksum"] = checksum
+                hasChecksumUpdated = True
+            
             for p in PHRASES:
                 tags = soup.body.find_all(string=re.compile(p))
                 print(f'{item["name"]}, CLOSED FUND TAGS: {tags}')
                 if len(tags) > 0:
-                    print(f'{item["name"]}, CLOSED FUND: Still closed.')
+                    print(f'{item["name"]}, CLOSED FUND: Phrase found. Still closed.')
                     break
             else:
-                print(f'{item["name"]}, CLOSED FUND: Check required.')
-                item["checksum"] = ""
+                if hasChecksumUpdated:
+                    item["status"] = "check required"
+                    print(f'{item["name"]}, CLOSED FUND: Page change detected. Updating checksum. Check required.')
+                else:
+                    print(f'{item["name"]}, CLOSED FUND: Phrase not found. Checksums match. Still closed.')
         
         else:                               # check required
-            print(f'{item["name"]}, CHECK FUND')
+            print(f'{item["name"]}, CHECK FUND: Check required.', end='')
+            if checksum != old_checksum:
+                item["checksum"] = checksum
+                print(f' Updating checksum.', end='')
+            print('')
         
     dict_to_csv(database, 'database.csv', FIELDNAMES)
 
