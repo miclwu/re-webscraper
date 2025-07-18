@@ -33,22 +33,30 @@ def get_soup(item, retries= 5, backoff= 2):
     for attempt in range(retries):
         try:
             response = requests.get(item["url"], headers=HEADERS)
+            if 'text/html' not in response.headers['content-type']:
+                raise TypeError
             response.raise_for_status()
             soup = BeautifulSoup(response.text, "html.parser")
 
             return soup
         
+        except TypeError as e:
+            wait_time = backoff ** attempt
+            print(f'TypeError: {e}. Retrying in {wait_time} seconds...')
+            time.sleep(wait_time)
+
         except HTTPError as e:
             if e.response.status_code == 412:
                 print(f'Error 412. Skipping "{item["url"]}"...')
                 return None
             wait_time = backoff ** attempt
-            print(f"HTTP error: {e}. Retrying in {wait_time} seconds...")
+            print(f'HTTP error: {e}. Retrying in {wait_time} seconds...')
             time.sleep(wait_time)
             
         except Exception as e:
             print(f'Failed to reach URL: {item["url"]}. Error: {e}. Skipping...')
             return None
+    return None
 
 def main():
     database = csv_to_dict(DATAFILE)
