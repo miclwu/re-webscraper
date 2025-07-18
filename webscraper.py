@@ -23,7 +23,11 @@ HEADERS = {
 PHRASES = ["not currently accepting"]
 FIELDNAMES = ["name", "url", "status", "checksum"]
 
-database = csv_to_dict('database.csv')
+OPEN = "Open"
+CLOSED = "Closed"
+CHECK = "Check Required"
+
+DATAFILE = "database_FULL.csv"
 
 def get_soup(item, retries= 5, backoff= 2):
     for attempt in range(retries):
@@ -47,10 +51,12 @@ def get_soup(item, retries= 5, backoff= 2):
             return None
 
 def main():
+    database = csv_to_dict(DATAFILE)
+
     for item in database:
         assert(item["name"])
         assert(item["url"])
-        assert(item["status"] == "open" or item["status"] == "closed" or item["status"] == "check required")
+        assert(item["status"] == OPEN or item["status"] == CLOSED or item["status"] == CHECK)
 
         old_checksum = item["checksum"]
         
@@ -66,15 +72,15 @@ def main():
                 print(f'{item["name"]}, {item["status"].upper()} FUND: Adding new checksum.')
                 continue
 
-        if item["status"] == "open":      # fund open
+        if item["status"] == OPEN:      # fund open
             if checksum != old_checksum:
                 item["checksum"] = checksum
-                item["status"] = "check required"
+                item["status"] = CHECK
                 print(f'{item["name"]}, OPEN FUND: Page change detected. Updating checksum. Check required.')
             else:
                 print(f'{item["name"]}, OPEN FUND: Checksums match.')
 
-        elif item["status"] == "closed":  # fund closed
+        elif item["status"] == CLOSED:  # fund closed
             hasChecksumUpdated = False 
 
             if checksum != old_checksum:
@@ -89,7 +95,7 @@ def main():
                     break
             else:
                 if hasChecksumUpdated:
-                    item["status"] = "check required"
+                    item["status"] = CHECK
                     print(f'{item["name"]}, CLOSED FUND: Page change detected. Updating checksum. Check required.')
                 else:
                     print(f'{item["name"]}, CLOSED FUND: Phrase not found. Checksums match. Still closed.')
@@ -101,7 +107,7 @@ def main():
                 print(f' Updating checksum.', end='')
             print('')
         
-    dict_to_csv(database, 'database.csv', FIELDNAMES)
+    dict_to_csv(database, DATAFILE, FIELDNAMES)
 
 if __name__ == "__main__":
     main()
