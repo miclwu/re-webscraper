@@ -8,7 +8,6 @@ from requests.exceptions import HTTPError
 from utilities import csv_to_dict, dict_to_csv
 
 # TODO:
-# - PRIORITY: checksum static elements only (soup.body.text?, strip out script tags?)
 # - add way to add/remove to PHRASES, FIELDNAMES(?)
 # - checksum specific element(s) instead of checking <body>
 # - detect random binary data from response (DONE?)
@@ -77,7 +76,7 @@ def main():
         if not soup:
             continue
         
-        checksum = hashlib.sha256(soup.body.encode('utf-8')).hexdigest()
+        checksum = hashlib.sha256("".join(soup.body.text.split()).encode('utf-8')).hexdigest()
 
         if not old_checksum:
                 item["checksum"] = checksum
