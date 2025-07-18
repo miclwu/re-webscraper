@@ -8,11 +8,16 @@ from requests.exceptions import HTTPError
 from utilities import csv_to_dict, dict_to_csv
 
 # TODO:
+# - PRIORITY: checksum static elements only (soup.body.text?, strip out script tags?)
 # - add way to add/remove to PHRASES, FIELDNAMES(?)
 # - checksum specific element(s) instead of checking <body>
+# - detect random binary data from response (DONE?)
+# - allow multiple urls for each fund
 # - detect random binary data from response
 # - proxies
 # - research ways to implement into current software or to send a notification of potential fund changes
+#   - store csvs in database? (software/website could query database for funds that need to be checked and
+#                               could send changes to database)
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
