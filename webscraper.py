@@ -13,7 +13,6 @@ from utilities import csv_to_dict, dict_to_csv
 # - checksum specific element(s) instead of checking <body>
 # - detect random binary data from response (DONE?)
 # - allow multiple urls for each fund
-# - detect random binary data from response
 # - proxies
 # - research ways to implement into current software or to send a notification of potential fund changes
 #   - store csvs in database? (software/website could query database for funds that need to be checked and
