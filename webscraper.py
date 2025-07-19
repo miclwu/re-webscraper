@@ -4,6 +4,7 @@ import requests
 import re
 import hashlib
 import time
+from enum import Enum
 from requests.exceptions import HTTPError
 from utilities import csv_to_dict, dict_to_csv
 
