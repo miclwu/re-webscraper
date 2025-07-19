@@ -27,8 +27,10 @@ PHRASES = ["not.{0,100}accept.{0,100}application(s?)",
            "application(s?).{0,150}are(?!.{0,50}\bnot\b).{0,50}closed",
            "no open call(s?).{0,50}application(s?)",
            "are(?!.{0,50}\bnot\b).{0,50}closed",
-           "not.{0,50}offering.{0,50}fund",
-           "(we|there)(?!.{0,50}\bnot\b).{0,50}waiting list"]
+           "not.{0,50}offering.{0,50}fund"]
+
+#"(we|there)(?!.{0,50}\bnot\b).{0,50}waiting list"
+
 FIELDNAMES = ["name", "url", "status", "checksum"]
 
 class Status(Enum):
