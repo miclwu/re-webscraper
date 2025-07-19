@@ -31,9 +31,10 @@ PHRASES = ["not.{0,100}accept.{0,100}application(s?)",
            "(we|there)(?!.{0,50}\bnot\b).{0,50}waiting list"]
 FIELDNAMES = ["name", "url", "status", "checksum"]
 
-OPEN = "Open"
-CLOSED = "Closed"
-CHECK = "Check Required"
+class Status(Enum):
+    OPEN = "Open"
+    CLOSED = "Closed"
+    CHECK = "Check Required"
 
 DATAFILE = "database_FULL.csv"
 
