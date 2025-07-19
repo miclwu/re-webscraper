@@ -23,7 +23,12 @@ HEADERS = {
     "Accept-Language": "en-US,en;q=0.9"
 }
 
-PHRASES = ["not currently accepting"]
+PHRASES = ["not.{0,100}accept.{0,100}application(s?)",
+           "application(s?).{0,150}are(?!.{0,50}\bnot\b).{0,50}closed",
+           "no open call(s?).{0,50}application(s?)",
+           "are(?!.{0,50}\bnot\b).{0,50}closed",
+           "not.{0,50}offering.{0,50}fund",
+           "(we|there)(?!.{0,50}\bnot\b).{0,50}waiting list"]
 FIELDNAMES = ["name", "url", "status", "checksum"]
 
 OPEN = "Open"
@@ -99,9 +104,9 @@ def main():
                 hasChecksumUpdated = True
             
             for p in PHRASES:
-                tags = soup.body.find_all(string=re.compile(p))
-                print(f'{item["name"]}, CLOSED FUND TAGS: {tags}')
+                tags = soup.body.find_all(string=re.compile(p, re.IGNORECASE))
                 if len(tags) > 0:
+                    print(f'{item["name"]}, CLOSED FUND TAGS: {tags}')
                     print(f'{item["name"]}, CLOSED FUND: Phrase found. Still closed.')
                     break
             else:
