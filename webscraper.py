@@ -10,9 +10,9 @@ from utilities import csv_to_dict, dict_to_csv
 
 # TODO:
 # - add way to add/remove to PHRASES, FIELDNAMES(?)
-# - checksum specific element(s) instead of checking <body>
+# - checksum specific element(s) instead of checking <body> text
+# - 2-bit predictor?
 # - detect random binary data from response (DONE?)
-# - allow multiple urls for each fund
 # - proxies
 # - research ways to implement into current software or to send a notification of potential fund changes
 #   - store csvs in database? (software/website could query database for funds that need to be checked and
