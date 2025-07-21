@@ -16,6 +16,12 @@ def dict_to_csv(data, outfile, fieldnames):
         writer.writeheader()
         writer.writerows([row for row in data])
 
+def csv_clear_field(infile, outfile, fieldnames, field):
+    data = csv_to_dict(infile)
+    for item in data:
+        item[field] = ""
+    dict_to_csv(data, outfile, fieldnames)
+
 def json_to_dict(infile):
     with open(infile, 'r') as f:
         dictobj = json.load(f)
@@ -24,4 +30,3 @@ def json_to_dict(infile):
 def dict_to_json(dictobj, outfile, indent=4):
     with open(outfile, 'w') as f:
         json.dump(dictobj, f, indent=indent)
-
