@@ -118,11 +118,11 @@ def main():
             case (Status.OPEN.value, False, False) | (Status.OPEN.value, False, True)| (Status.CLOSED.value, False, False) | (Status.CHECK.value, False, False) | (Status.CHECK.value, False, True):
                 print(f'{item["name"]}, {item["status"].upper()} FUND: Checksums match.')
             case (Status.OPEN.value, True, False) | (Status.OPEN.value, True, True):
-                item["status"] = Status.CHECK
+                item["status"] = Status.CHECK.value
                 item["checksum"] = checksum
                 print(f'{item["name"]}, OPEN FUND: Page change detected. Updating checksum. Check required.')
             case (Status.CLOSED.value, True, False) | (Status.CLOSED.value, True, True):
-                item["status"] = Status.CHECK
+                item["status"] = Status.CHECK.value
                 item["checksum"] = checksum
                 print(f'{item["name"]}, CLOSED FUND: Page change detected. Updating checksum. Check required.')
             case (Status.CHECK.value, True, False) | (Status.CHECK.value, True, True):
