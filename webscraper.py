@@ -47,6 +47,7 @@ class Status(Enum):
 DELIM = ";;"
 
 DATAFILE = "database_TEST.csv"
+OUTFILE = "checkfunds.csv"
 
 def get_soup(url, retries= 5, backoff= 2):
     for attempt in range(retries):
@@ -79,6 +80,7 @@ def get_soup(url, retries= 5, backoff= 2):
 
 def main():
     database = csv_to_dict(DATAFILE)
+    funds_to_check = []
 
     for item in database:
         assert(item["name"])
@@ -128,8 +130,12 @@ def main():
             case (Status.CHECK.value, True, False) | (Status.CHECK.value, True, True):
                 item["checksum"] = checksum
                 print(f'{item["name"]}, CHECK FUND: Updating checksum.')
+        
+        if item["status"] == Status.CHECK.value:
+            funds_to_check.append(item)
 
     dict_to_csv(database, DATAFILE, FIELDNAMES)
+    dict_to_csv(funds_to_check, OUTFILE, FIELDNAMES)
 
 if __name__ == "__main__":
     main()
