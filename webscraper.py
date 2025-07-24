@@ -9,14 +9,19 @@ from requests.exceptions import HTTPError
 from utilities import csv_to_dict, dict_to_csv
 
 # TODO:
-# - revamp input/output system
+# - revamp input/output system (function and tolerance)
 #   - output changed funds to a separate csv file as well, accept input for manual fund status change
 #   - OR sort main csv by last changed so manual editing is easier
+#   - input:
+#       - add funds
+#       - delete funds
+#       - modify funds
 # - report fund amount if possible
 #   - 2 new fields: fund amount and path/id to html element containing fund amount (or maybe find it thru api?)
 # - deployment
 #   - AWS server w/ simple SQL database?
 #   - privileged users need to be able to request/modify data
+# - use xlsx instead of csv?
 # - add way to add/remove to PHRASES, FIELDNAMES(?)
 # - checksum specific element(s) instead of checking <body> text
 # - 2-bit predictor?
