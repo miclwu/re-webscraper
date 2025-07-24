@@ -1,7 +1,5 @@
 from bs4 import BeautifulSoup
 import requests
-#import json
-import re
 import hashlib
 import time
 from enum import Enum
