@@ -22,7 +22,6 @@ from utilities import csv_to_dict, dict_to_csv, dbtable_to_dict, dict_update_dbt
 #   - AWS server w/ simple SQL database?
 #   - privileged users need to be able to request/modify data
 # - use xlsx instead of csv?
-# - add way to add/remove to PHRASES, FIELDNAMES(?)
 # - checksum specific element(s) instead of checking <body> text
 # - 2-bit predictor?
 # - proxies
