@@ -5,8 +5,8 @@ import re
 import hashlib
 import time
 from enum import Enum
-from requests.exceptions import HTTPError
-from utilities import csv_to_dict, dict_to_csv
+from requests.exceptions import HTTPError, Timeout
+from utilities import csv_to_dict, dict_to_csv, dbtable_to_dict, dict_update_dbtable
 
 # TODO:
 # - revamp input/output system (function and tolerance)
@@ -34,14 +34,6 @@ HEADERS = {
     "Accept-Language": "en-US,en;q=0.9"
 }
 
-PHRASES = ["not.{0,100}accept.{0,100}application(s?)",
-           "application(s?).{0,150}are(?!.{0,50}\bnot\b).{0,50}closed",
-           "no open call(s?).{0,50}application(s?)",
-           "are(?!.{0,50}\bnot\b).{0,50}closed",
-           "not.{0,50}offering.{0,50}fund"]
-
-#"(we|there)(?!.{0,50}\bnot\b).{0,50}waiting list"
-
 FIELDNAMES = ["name", "url", "status", "checksum"]
 
 class Status(Enum):
@@ -51,7 +43,8 @@ class Status(Enum):
 
 DELIM = ";;"
 
-DATAFILE = "database_TEST.csv"
+DATABASE = "webscraper.db"
+FUNDS_TABLE = "funds"
 INFILE = "input.csv"
 OUTFILE = "checkfunds.csv"
 
@@ -96,16 +89,14 @@ def get_soup(url, retries= 3, backoff= 2):
     return None
 
 def main():
-    database = csv_to_dict(DATAFILE)
+    funds = dbtable_to_dict(DATABASE, FUNDS_TABLE)
     funds_to_check = []
+    funds_to_update = []
 
-    for item in database:
+    for item in funds:
         assert(item["name"])
         assert(item["url"])
         assert(item["status"] == Status.OPEN.value or item["status"] == Status.CLOSED.value or item["status"] == Status.CHECK.value)
-
-        isChecksumNew = False
-        foundPhrase = False
 
         old_checksum = item["checksum"]
         checksum = ""
@@ -115,43 +106,34 @@ def main():
             soup = get_soup(url)
 
             if not soup:
+                item["access_failures"] += 1
+                funds_to_update.append(item)
+                if item["access_failures"] >= 3:
+                    funds_to_check.append(item)
                 continue
+
+            item["access_failures"] = 0
             
             checksum += hashlib.sha256("".join(soup.body.text.split()).encode('utf-8')).hexdigest()
-
-            for p in PHRASES:
-                tags = soup.body.find_all(string=re.compile(p, re.IGNORECASE))
-                if len(tags) > 0:
-                    foundPhrase = True
-                    print(f'{item["name"]}, PHRASE TAGS: {tags}')
         
         if not old_checksum:
             item["checksum"] = checksum
             print(f'{item["name"]}, {item["status"].upper()} FUND: Adding new checksum.')
+            funds_to_update.append(item)
             continue
-
-        if checksum != old_checksum:
-            isChecksumNew = True
         
-        match (item["status"], isChecksumNew, foundPhrase):
-            case (Status.OPEN.value, False, False) | (Status.OPEN.value, False, True)| (Status.CLOSED.value, False, False) | (Status.CHECK.value, False, False) | (Status.CHECK.value, False, True):
-                print(f'{item["name"]}, {item["status"].upper()} FUND: Checksums match.')
-            case (Status.OPEN.value, True, False) | (Status.OPEN.value, True, True):
-                item["status"] = Status.CHECK.value
-                item["checksum"] = checksum
-                print(f'{item["name"]}, OPEN FUND: Page change detected. Updating checksum. Check required.')
-            case (Status.CLOSED.value, True, False) | (Status.CLOSED.value, True, True):
-                item["status"] = Status.CHECK.value
-                item["checksum"] = checksum
-                print(f'{item["name"]}, CLOSED FUND: Page change detected. Updating checksum. Check required.')
-            case (Status.CHECK.value, True, False) | (Status.CHECK.value, True, True):
-                item["checksum"] = checksum
-                print(f'{item["name"]}, CHECK FUND: Updating checksum.')
+        if checksum != old_checksum:
+            item["status"] = Status.CHECK.value
+            item["checksum"] = checksum
+            funds_to_update.append(item)
+            print(f'{item["name"]}, {item["status"].upper()} FUND: Page change detected. Updating checksum. Check required.')
+        else:
+            print(f'{item["name"]}, {item["status"].upper()} FUND: Checksums match.')
         
         if item["status"] == Status.CHECK.value:
             funds_to_check.append(item)
-
-    dict_to_csv(database, DATAFILE, FIELDNAMES)
+    
+    dict_update_dbtable(funds_to_update, DATABASE, FUNDS_TABLE, ["status", "checksum", "access_failures"])
     dict_to_csv(funds_to_check, OUTFILE, FIELDNAMES)
 
 if __name__ == "__main__":
