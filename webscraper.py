@@ -61,10 +61,10 @@ def precheck(database):
     for item in inputs:
 '''
 
-def get_soup(url, retries= 5, backoff= 2):
+def get_soup(url, retries= 3, backoff= 2):
     for attempt in range(retries):
         try:
-            response = requests.get(url, headers=HEADERS)
+            response = requests.get(url, headers=HEADERS, timeout=(3.1, 15.1))
             if 'text/html' not in response.headers['content-type']:
                 raise TypeError
             response.raise_for_status()
@@ -72,6 +72,11 @@ def get_soup(url, retries= 5, backoff= 2):
 
             return soup
         
+        except Timeout as e:
+            wait_time = backoff ** attempt
+            print(f'TimeoutError: {e}. Retrying in {wait_time} seconds...')
+            time.sleep(wait_time)
+
         except TypeError as e:
             wait_time = backoff ** attempt
             print(f'TypeError: {e}. Retrying in {wait_time} seconds...')
