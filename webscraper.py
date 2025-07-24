@@ -47,7 +47,14 @@ class Status(Enum):
 DELIM = ";;"
 
 DATAFILE = "database_TEST.csv"
+INFILE = "input.csv"
 OUTFILE = "checkfunds.csv"
+
+'''
+def precheck(database):
+    inputs = csv_to_dict(INFILE)
+    for item in inputs:
+'''
 
 def get_soup(url, retries= 5, backoff= 2):
     for attempt in range(retries):
