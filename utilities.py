@@ -28,6 +28,31 @@ def dbtable_to_dict(database, table):
 
     conn.close()
     return data
+
+def dict_update_dbtable(data, database, table, fieldnames):
+    conn = sqlite3.connect(database)
+    cur = conn.cursor()
+    res = cur.execute("SELECT name FROM sqlite_master")
+    if (table,) not in res.fetchall():
+        conn.close()
+        raise InvalidInputError("Table not found")
+    res = cur.execute(f"PRAGMA table_info({table})")
+    db_fieldnames = [colinfo[1] for colinfo in res.fetchall()]
+    for field in fieldnames:
+        if field not in db_fieldnames:
+            conn.close()
+            raise InvalidInputError(f"Invalid field name: {field}")
+
+    updates = ""
+    for field in fieldnames:
+        updates += f", {field} = ?"
+    updates = updates.lstrip(", ")
+    for row in data:
+        params = tuple([row[field] for field in fieldnames] + [row["id"]])
+        cur.execute(f"UPDATE {table} SET {updates} WHERE id = ?", params)
+    conn.commit()
+    conn.close()
+
 def csv_to_dict(infile):
     data = []
     with open(infile, 'r') as f:
