@@ -3,13 +3,16 @@
 ## Using the webscraper
 
 Arguments (global variables in `webscraper.py`):
-- `DATAFILE`: The CSV file where all URLs and other information is stored, input/output
+- `DATABASE`: The .db file used to store data
+- `FUNDS_TABLE`: The name of the table in `DATABASE` that stores fund data
+- `INFILE`: The name of the input file
+- `OUTFILE`: The name of the output file
 - `FIELDNAMES`: The headers for the fields in the CSV file, currently requires `name`, `url`, `status`, and `checksum`
-- `PHRASES`: The phrases used to check for fund `Closed` status
-- `DELIM`: The delimiter uised to separate URLs within the `url` field in the CSV file
+- `STATUS`: The accepted values for the field/column, `status`
+- `DELIM`: The delimiter used to separate URLs within the `url` field in `DATABASE`, `INFILE`, and `OUTFILE`
 - `HEADERS`: The request headers sent when scraping
 
-Run `webscraper.py` in the same directory as `DATAFILE`.
+Run `webscraper.py` in the same directory as `DATABASE`.
 
 ## python env
 
