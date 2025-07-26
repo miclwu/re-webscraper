@@ -2,9 +2,27 @@ import sqlite3
 import csv
 import json
 
+# TODO:
+# - Refactor validation to separate function
+# - Standardize db functions
+
 class InvalidInputError(ValueError):
     """Errors raised for invalid input"""
     pass
+
+def db_validate_table(conn, table):
+    cur = conn.cursor()
+    res = cur.execute("SELECT name FROM sqlite_master")
+    if (table,) not in res.fetchall():
+        raise InvalidInputError("Table not found")
+
+def db_validate_fieldnames(conn, table, fieldnames):
+    cur = conn.cursor()
+    res = cur.execute(f"PRAGMA table_info({table})")
+    db_fieldnames = [colinfo[1] for colinfo in res.fetchall()]
+    for field in fieldnames:
+        if field not in db_fieldnames:
+            raise InvalidInputError(f"Invalid field name: {field}")
 
 # from https://docs.python.org/3/library/sqlite3.html#sqlite3-howto-row-factory
 def db_dict_factory(cursor, row):
@@ -53,11 +71,42 @@ def dict_update_dbtable(data, database, table, fieldnames):
     conn.commit()
     conn.close()
 
+def db_insert(conn, table, dictobj):
+    cur = conn.cursor()
+    keystr = ''
+    valstr = ''
+    for key in dictobj.keys():
+        keystr += f"{key}, "
+        valstr += f":{key}, "
+    keystr = keystr.rstrip(", ")
+    valstr = valstr.rstrip(", ")
+
+    cur.execute(f"INSERT INTO {table} ({keystr}) VALUES ({valstr})", dictobj)
+    conn.commit()
+
+def db_delete(conn, table, key, val):
+    cur = conn.cursor()
+    cur.execute(f"DELETE FROM {table} WHERE {key} = ?", (val, ))
+    conn.commit()
+
+def db_update(conn, table, dictobj, identifier_index=0):
+    cur = conn.cursor()
+    updatestr = ""
+    for key in dictobj.keys():
+        updatestr += f"{key} = :{key}, "
+    updatestr = updatestr.rstrip(", ")
+    identifier = list(dictobj.keys())[identifier_index]
+    cur.execute(f"UPDATE {table} SET {updatestr} WHERE {identifier} = :{identifier}", dictobj)
+    conn.commit()
+
 def csv_to_dict(infile):
     data = []
     with open(infile, 'r') as f:
         reader = csv.DictReader(f)
         for row in reader:
+            for key in row:
+                if row[key] == '':
+                    row[key] = None
             data.append(row)
     return data
 

@@ -7,6 +7,7 @@ from requests.exceptions import HTTPError, Timeout
 from utilities import csv_to_dict, dict_to_csv, dbtable_to_dict, dict_update_dbtable
 
 # TODO:
+# - cleanup and refactor code
 # - revamp input/output system (function and tolerance)
 #   - output changed funds to a separate csv file as well, accept input for manual fund status change
 #   - OR sort main csv by last changed so manual editing is easier
@@ -44,12 +45,15 @@ DATABASE = "webscraper.db"
 FUNDS_TABLE = "funds"
 INFILE = "input.csv"
 OUTFILE = "checkfunds.csv"
+AUDITLOG = "auditlog.txt"
 
-'''
-def precheck(database):
-    inputs = csv_to_dict(INFILE)
-    for item in inputs:
-'''
+def precheck():
+    try:
+        inputs = csv_to_dict(INFILE)
+    except FileNotFoundError as e:
+        print(f'FileNotFoundError: {e}. No inputs.')
+        return None
+    return inputs
 
 def get_soup(url, retries= 3, backoff= 2):
     for attempt in range(retries):
@@ -86,6 +90,24 @@ def get_soup(url, retries= 3, backoff= 2):
     return None
 
 def main():
+    inputs = precheck()
+
+    auditlog = open(AUDITLOG, "w")
+
+    for item in inputs:
+        if item.keys() != ["command", "name", "url", "status"]:
+            auditlog.write("INPUT FILE ERROR: Invalid set of column headers.")
+            break
+        if item["command"].upper() not in ["ADD", "MOD", "DEL"]:
+            auditlog.write(f"INPUT ERROR: Invalid command: {item["command"].upper()} {item["name"]}")
+            continue
+        if item["status"] not in ["Open", "Closed", "Check Required"]:
+            auditlog.write(f"INPUT ERROR: Invalid status: {item["command"].upper()} for command: {item["command"].upper()} {item["name"]}")
+            continue
+        
+
+    auditlog.close()
+
     funds = dbtable_to_dict(DATABASE, FUNDS_TABLE)
     funds_to_check = []
     funds_to_update = []
