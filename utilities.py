@@ -111,11 +111,18 @@ def csv_to_dict(infile):
     return data
 
 def dict_to_csv(data, outfile, fieldnames):
+    datacpy = []
+    for row in data:
+        dictcpy = dict()
+        for key in row:
+            if key in fieldnames:
+                dictcpy[key] = row[key]
+        datacpy.append(dictcpy)
+    
     with open(outfile, 'w', newline='') as f:
         writer = csv.DictWriter(f, fieldnames)
-        
         writer.writeheader()
-        writer.writerows([row for row in data])
+        writer.writerows([row for row in datacpy])
 
 def csv_clear_field(infile, outfile, fieldnames, field):
     data = csv_to_dict(infile)
