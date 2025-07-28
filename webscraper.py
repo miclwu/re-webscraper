@@ -9,13 +9,19 @@ from utilities import db_validate_fieldnames, db_insert, db_update, db_delete
 
 # TODO:
 # - cleanup and refactor code
+# - implement precheck before executing MOD commands to ensure page changes made b/w command
+#       submission and execution are caught
+# - improve multi-URL functionality
+#   - map URLs to checksums
+#   - e.g. two URLs, 1st URL checksum is NULL, 2nd is set. 1st checksum gets set. Program incorrectly detects
+#       change in checksum (checksum2 -> checksum1checksum2)
 # - revamp input/output system (function and tolerance)
-#   - output changed funds to a separate csv file as well, accept input for manual fund status change
-#   - OR sort main csv by last changed so manual editing is easier
+#   - output changed funds to a separate csv file as well, accept input for manual fund status change X
 #   - input:
-#       - add funds
-#       - delete funds
-#       - modify funds
+#       - add funds X
+#       - delete funds X
+#       - modify funds X
+#       - get funds table
 # - report fund amount if possible
 #   - 2 new fields: fund amount and path/id to html element containing fund amount (or maybe find it thru api?)
 # - deployment
