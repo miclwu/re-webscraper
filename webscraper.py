@@ -2,9 +2,10 @@ from bs4 import BeautifulSoup
 import requests
 import hashlib
 import time
-from enum import Enum
+import sqlite3
 from requests.exceptions import HTTPError, Timeout
 from utilities import csv_to_dict, dict_to_csv, dbtable_to_dict, dict_update_dbtable
+from utilities import db_validate_fieldnames, db_insert, db_update, db_delete
 
 # TODO:
 # - cleanup and refactor code
