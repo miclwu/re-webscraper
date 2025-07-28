@@ -100,20 +100,39 @@ def get_soup(url, retries= 3, backoff= 2):
 def main():
     inputs = precheck()
 
+    conn = sqlite3.connect(DATABASE)
     auditlog = open(AUDITLOG, "w")
 
     for item in inputs:
-        if item.keys() != ["command", "name", "url", "status"]:
-            auditlog.write("INPUT FILE ERROR: Invalid set of column headers.")
+        if list(item.keys()) != ["command", "name", "url", "status"]:
+            auditlog.write('INPUT FILE ERROR: Invalid set of column headers\r\n')
             break
-        if item["command"].upper() not in ["ADD", "MOD", "DEL"]:
-            auditlog.write(f"INPUT ERROR: Invalid command: {item["command"].upper()} {item["name"]}")
-            continue
-        if item["status"] not in ["Open", "Closed", "Check Required"]:
-            auditlog.write(f"INPUT ERROR: Invalid status: {item["command"].upper()} for command: {item["command"].upper()} {item["name"]}")
-            continue
-        
 
+        cmd = item.pop("command").upper()
+
+        if item["status"] not in STATUSES and cmd != "DEL":
+            auditlog.write(f'INPUT ERROR: Invalid status: "{item["status"]}" for command: {item["command"].upper()} {item["name"]}\r\n')
+            continue
+        try:
+            if cmd == "ADD":
+                db_insert(conn, FUNDS_TABLE, item)
+                auditlog.write(f'ADD: {item["name"]}\r\n')
+            elif cmd == "MOD":
+                # TODO: notify user if fund DNE
+                db_update(conn, FUNDS_TABLE, item)
+                auditlog.write(f'MOD: {item["name"]}, {item["url"]}, {item["status"]}\r\n')
+            elif cmd == "DEL":
+                db_delete(conn, FUNDS_TABLE, "name", item["name"])
+                auditlog.write(f'DEL: {item["name"]}\r\n')
+            else:
+                auditlog.write(f'INPUT ERROR: Invalid command: {cmd.upper()} {item["name"]}\r\n')
+                continue
+        except sqlite3.IntegrityError as e:
+            auditlog.write(f'INTEGRITY ERROR: {cmd} {item["name"]}: {e}\r\n')
+        except Exception as e:
+            print(f'Encountered exception: {e}')
+
+    conn.close()
     auditlog.close()
 
     funds = dbtable_to_dict(DATABASE, FUNDS_TABLE)
