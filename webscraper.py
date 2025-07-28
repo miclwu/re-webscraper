@@ -41,10 +41,11 @@ HEADERS = {
 
 FIELDNAMES = ["name", "url", "status", "checksum"]
 
-class Status(Enum):
-    OPEN = "Open"
-    CLOSED = "Closed"
-    CHECK = "Check Required"
+OPEN = "Open"
+CLOSED = "Closed"
+CHECK = "Check Required"
+
+STATUSES = [OPEN, CLOSED, CHECK]
 
 DELIM = ";;"
 
