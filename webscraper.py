@@ -39,7 +39,7 @@ HEADERS = {
     "Accept-Language": "en-US,en;q=0.9"
 }
 
-FIELDNAMES = ["name", "url", "status", "checksum"]
+FIELDNAMES = ["name", "url", "status", "urls_to_check"]
 
 OPEN = "Open"
 CLOSED = "Closed"
