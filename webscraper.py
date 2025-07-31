@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import hashlib
+import os
 import time
 import sqlite3
 from requests.exceptions import HTTPError, Timeout
@@ -49,18 +50,30 @@ STATUSES = (OPEN, CLOSED, CHECK)
 
 DELIM = ";;"
 
-DATABASE = "webscraper.db"
+DATABASE = "test.db"
 FUNDS_TABLE = "funds"
-INFILE = "input.csv"
+INPUT_DIR_PATH = 'inputs'
+INFILE_TEMPLATE  = 'input_X.csv'
 OUTFILE = "checkfunds.csv"
 AUDITLOG = "auditlog.txt"
 
-def precheck():
-    try:
-        inputs = csv_to_dict(INFILE)
-    except FileNotFoundError as e:
-        print(f'FileNotFoundError: {e}. No inputs.')
-        return None
+def queue_inputs():
+    if not os.path.isdir(INPUT_DIR_PATH):
+        print(f"Input directory not found. Unable to locate inputs.")
+
+    inputs = []
+    i = 1
+    while True:
+        infile = f"{INPUT_DIR_PATH}/{INFILE_TEMPLATE.replace('X', str(i))}"
+        if not os.path.isfile(infile):
+            print(f"Input files: {i - 1}")
+            break
+        try:
+            inputs.extend(csv_to_dict(infile))
+        except Exception as e:
+            print(f"webscraper.py: queue_inputs(): Exception: {e}")
+            break
+        i += 1
     return inputs
 
 def exec_cmd(conn, log, item):
@@ -187,7 +200,7 @@ def check_fund(fund, funds_to_check, funds_to_update):
     return funds_to_check, funds_to_update
 
 def main():
-    inputs = precheck()
+    inputs = queue_inputs()
 
     if inputs:
         conn = sqlite3.connect(DATABASE)
