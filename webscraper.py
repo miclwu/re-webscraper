@@ -45,7 +45,7 @@ OPEN = "Open"
 CLOSED = "Closed"
 CHECK = "Check Required"
 
-STATUSES = [OPEN, CLOSED, CHECK]
+STATUSES = (OPEN, CLOSED, CHECK)
 
 DELIM = ";;"
 
