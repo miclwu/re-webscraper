@@ -63,6 +63,44 @@ def precheck():
         return None
     return inputs
 
+def exec_cmd(conn, log, item):
+    if set(item.keys()) != {'command', 'name', 'url', 'status'}:
+        log.write('INPUT FILE ERROR: Invalid set of column headers\r\n')
+        return
+
+    cmd = item.pop('command').upper()
+
+    if not item['name']:
+        log.write(f"INPUT ERROR: Empty name for command {cmd}\r\n")
+        return
+    if not item['url']:
+        log.write(f"INPUT ERROR: Empty URL for command {cmd} {item['name']}\r\n")
+        return
+    if item['status'] not in STATUSES and cmd != 'DEL':
+        log.write(f"INPUT ERROR: Invalid status: \"{item['status']}\" for command: {cmd} {item['name']}\r\n")
+        return
+    try:
+        if cmd == 'ADD':
+            db_insert(conn, FUNDS_TABLE, item)
+            log.write(f"ADD: {item['name']}\r\n")
+        elif cmd == 'MOD':
+            # TODO: notify user if fund DNE
+            item['checksum'] = None
+            item['urls_to_check'] = None
+            item['access_failures'] = 0
+            db_update(conn, FUNDS_TABLE, item)
+            log.write(f"MOD: {item['name']}, {item['url']}, {item['status']}\r\n")
+        elif cmd == 'DEL':
+            db_delete(conn, FUNDS_TABLE, 'name', item['name'])
+            log.write(f"DEL: {item['name']}\r\n")
+        else:
+            log.write(f"INPUT ERROR: Invalid command: {cmd.upper()} {item['name']}\r\n")
+
+    except sqlite3.IntegrityError as e:
+        log.write(f"INTEGRITY ERROR: {cmd} {item['name']}: {e}\r\n")
+    except Exception as e:
+        print(f'Encountered exception: {e}')
+
 def get_soup(url, retries= 3, backoff= 2):
     for attempt in range(retries):
         try:
@@ -97,45 +135,66 @@ def get_soup(url, retries= 3, backoff= 2):
             return None
     return None
 
+def check_fund(fund, funds_to_check, funds_to_update):
+    urls = fund['url'].split(DELIM)
+    urls_to_check = set(fund['urls_to_check'].split(DELIM)) if fund['urls_to_check'] else set()
+    old_checksums = fund['checksum'].split(DELIM) if fund['checksum'] else ['' for u in urls]
+    checksums = []
+
+    need_update = False
+    failed_connect = False
+    for i in range(len(urls)):
+
+        soup = get_soup(urls[i])
+
+        if not soup:
+            need_update = True
+            failed_connect = True
+            fund['access_failures'] += 1
+    
+            if fund['access_failures'] >= 3:
+                urls_to_check.add(urls[i])
+            
+            checksums.append(old_checksums[i])
+            print(f"{fund['name']}, {fund['status'].upper()} FUND: URL {i+1}: Failed to connect.")
+        else:
+            checksums.append(hashlib.sha256("".join(soup.body.text.split()).encode('utf-8')).hexdigest())
+        
+            if not old_checksums[i]:
+                need_update = True
+                print(f"{fund['name']}, {fund['status'].upper()} FUND: URL {i+1}: Adding new checksum.")
+            elif checksums[i] != old_checksums[i]:
+                need_update = True
+                urls_to_check.add(urls[i])
+                print(f"{fund['name']}, {fund['status'].upper()} FUND: URL {i+1}: Updating checksum. Check required.")
+            else:
+                print(f"{fund['name']}, {fund['status'].upper()} FUND: URL {i+1}: Checksums match.")
+    
+    if not failed_connect:
+        fund['access_failures'] = 0            
+    
+    if need_update:
+        fund['checksum'] = DELIM.join(checksums)
+        funds_to_update.append(fund)
+    
+    if urls_to_check:
+        fund['status'] = CHECK
+        fund['urls_to_check'] = DELIM.join(urls_to_check)
+    
+    if fund['status'] == CHECK:
+        funds_to_check.append(fund)
+
+    return funds_to_check, funds_to_update
+
 def main():
     inputs = precheck()
 
     if inputs:
-
         conn = sqlite3.connect(DATABASE)
         auditlog = open(AUDITLOG, "w")
 
         for item in inputs:
-            if list(item.keys()) != ["command", "name", "url", "status"]:
-                auditlog.write('INPUT FILE ERROR: Invalid set of column headers\r\n')
-                break
-
-            cmd = item.pop("command").upper()
-
-            if item["status"] not in STATUSES and cmd != "DEL":
-                auditlog.write(f'INPUT ERROR: Invalid status: "{item["status"]}" for command: {item["command"].upper()} {item["name"]}\r\n')
-                continue
-            try:
-                if cmd == "ADD":
-                    db_insert(conn, FUNDS_TABLE, item)
-                    auditlog.write(f'ADD: {item["name"]}\r\n')
-                elif cmd == "MOD":
-                    # TODO: notify user if fund DNE
-                    item['checksum'] = None
-                    item['urls_to_check'] = None
-                    item['access_failures'] = 0
-                    db_update(conn, FUNDS_TABLE, item)
-                    auditlog.write(f'MOD: {item["name"]}, {item["url"]}, {item["status"]}\r\n')
-                elif cmd == "DEL":
-                    db_delete(conn, FUNDS_TABLE, "name", item["name"])
-                    auditlog.write(f'DEL: {item["name"]}\r\n')
-                else:
-                    auditlog.write(f'INPUT ERROR: Invalid command: {cmd.upper()} {item["name"]}\r\n')
-                    continue
-            except sqlite3.IntegrityError as e:
-                auditlog.write(f'INTEGRITY ERROR: {cmd} {item["name"]}: {e}\r\n')
-            except Exception as e:
-                print(f'Encountered exception: {e}')
+            exec_cmd(conn, auditlog, item)
 
         conn.close()
         auditlog.close()
@@ -145,57 +204,7 @@ def main():
     funds_to_update = []
 
     for item in funds:
-        assert(item["name"])
-        assert(item["url"])
-        assert(item["status"] == OPEN or item["status"] == CLOSED or item["status"] == CHECK)
-        urls = item['url'].split(DELIM)
-        urls_to_check = set(item['urls_to_check'].split(DELIM)) if item['urls_to_check'] else set()
-        old_checksums = item["checksum"].split(DELIM) if item["checksum"] else ['' for u in urls]
-        checksums = []
-
-        need_update = False
-        failed_connect = False
-        for i in range(len(urls)):
-
-            soup = get_soup(urls[i])
-
-            if not soup:
-                
-                need_update = True
-                failed_connect = True
-                item["access_failures"] += 1
-        
-                if item["access_failures"] >= 3:
-                    urls_to_check.add(urls[i])
-                
-                checksums.append(old_checksums[i])
-                print(f"{item['name']}, {item['status'].upper()} FUND: URL {i+1}: Failed to connect.")
-            else:
-                checksums.append(hashlib.sha256("".join(soup.body.text.split()).encode('utf-8')).hexdigest())
-            
-                if not old_checksums[i]:
-                    need_update = True
-                    print(f'{item["name"]}, {item["status"].upper()} FUND: URL {i+1}: Adding new checksum.')
-                elif checksums[i] != old_checksums[i]:
-                    need_update = True
-                    urls_to_check.add(urls[i])
-                    print(f'{item["name"]}, {item["status"].upper()} FUND: URL {i+1}: Updating checksum. Check required.')
-                else:
-                    print(f'{item["name"]}, {item["status"].upper()} FUND: URL {i+1}: Checksums match.')
-        
-        if not failed_connect:
-            item['access_failures'] = 0            
-        
-        if need_update:
-            item['checksum'] = DELIM.join(checksums)
-            funds_to_update.append(item)
-        
-        if urls_to_check:
-            item['status'] = CHECK
-            item['urls_to_check'] = DELIM.join(urls_to_check)
-        
-        if item['status'] == CHECK:
-            funds_to_check.append(item)
+        funds_to_check, funds_to_update = check_fund(item, funds_to_check, funds_to_update)
     
     dict_update_dbtable(funds_to_update, DATABASE, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'])
     dict_to_csv(funds_to_check, OUTFILE, FIELDNAMES)
