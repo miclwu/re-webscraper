@@ -63,11 +63,10 @@ def dict_update_dbtable(data, database, table, fieldnames):
 
     updates = ""
     for field in fieldnames:
-        updates += f", {field} = ?"
-    updates = updates.lstrip(", ")
+        updates += f"{field} = :{field}, "
+    updates = updates.rstrip(", ")
     for row in data:
-        params = tuple([row[field] for field in fieldnames] + [row["id"]])
-        cur.execute(f"UPDATE {table} SET {updates} WHERE id = ?", params)
+        cur.execute(f"UPDATE {table} SET {updates} WHERE id = :id", row)
     conn.commit()
     conn.close()
 
