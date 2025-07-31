@@ -147,44 +147,57 @@ def main():
     for item in funds:
         assert(item["name"])
         assert(item["url"])
-        assert(item["status"] == Status.OPEN.value or item["status"] == Status.CLOSED.value or item["status"] == Status.CHECK.value)
+        assert(item["status"] == OPEN or item["status"] == CLOSED or item["status"] == CHECK)
+        urls = item['url'].split(DELIM)
+        urls_to_check = set(item['urls_to_check'].split(DELIM)) if item['urls_to_check'] else set()
+        old_checksums = item["checksum"].split(DELIM) if item["checksum"] else ['' for u in urls]
+        checksums = []
 
-        old_checksum = item["checksum"]
-        checksum = ""
+        need_update = False
+        failed_connect = False
+        for i in range(len(urls)):
 
-        for url in item["url"].split(DELIM):
-        
-            soup = get_soup(url)
+            soup = get_soup(urls[i])
 
             if not soup:
+                
+                need_update = True
+                failed_connect = True
                 item["access_failures"] += 1
-                funds_to_update.append(item)
+        
                 if item["access_failures"] >= 3:
-                    funds_to_check.append(item)
-                continue
-
-            item["access_failures"] = 0
+                    urls_to_check.add(urls[i])
+                
+                checksums.append(old_checksums[i])
+                print(f"{item['name']}, {item['status'].upper()} FUND: URL {i+1}: Failed to connect.")
+            else:
+                checksums.append(hashlib.sha256("".join(soup.body.text.split()).encode('utf-8')).hexdigest())
             
-            checksum += hashlib.sha256("".join(soup.body.text.split()).encode('utf-8')).hexdigest()
+                if not old_checksums[i]:
+                    need_update = True
+                    print(f'{item["name"]}, {item["status"].upper()} FUND: URL {i+1}: Adding new checksum.')
+                elif checksums[i] != old_checksums[i]:
+                    need_update = True
+                    urls_to_check.add(urls[i])
+                    print(f'{item["name"]}, {item["status"].upper()} FUND: URL {i+1}: Updating checksum. Check required.')
+                else:
+                    print(f'{item["name"]}, {item["status"].upper()} FUND: URL {i+1}: Checksums match.')
         
-        if not old_checksum:
-            item["checksum"] = checksum
-            print(f'{item["name"]}, {item["status"].upper()} FUND: Adding new checksum.')
+        if not failed_connect:
+            item['access_failures'] = 0            
+        
+        if need_update:
+            item['checksum'] = DELIM.join(checksums)
             funds_to_update.append(item)
-            continue
         
-        if checksum != old_checksum:
-            item["status"] = Status.CHECK.value
-            item["checksum"] = checksum
-            funds_to_update.append(item)
-            print(f'{item["name"]}, {item["status"].upper()} FUND: Page change detected. Updating checksum. Check required.')
-        else:
-            print(f'{item["name"]}, {item["status"].upper()} FUND: Checksums match.')
+        if urls_to_check:
+            item['status'] = CHECK
+            item['urls_to_check'] = DELIM.join(urls_to_check)
         
-        if item["status"] == Status.CHECK.value:
+        if item['status'] == CHECK:
             funds_to_check.append(item)
     
-    dict_update_dbtable(funds_to_update, DATABASE, FUNDS_TABLE, ["status", "checksum", "access_failures"])
+    dict_update_dbtable(funds_to_update, DATABASE, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'])
     dict_to_csv(funds_to_check, OUTFILE, FIELDNAMES)
 
 if __name__ == "__main__":
