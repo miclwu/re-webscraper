@@ -97,7 +97,13 @@ def exec_cmd(conn, log, item):
             db_insert(conn, FUNDS_TABLE, item)
             log.write(f"ADD: {item['name']}\r\n")
         elif cmd == 'MOD':
-            # TODO: notify user if fund DNE
+            item_old = db_get_row(conn, FUNDS_TABLE, ('name', 'url', 'status', 'checksum', 'urls_to_check', 'access_failures'), item['name'])
+            if not item_old:
+                log.write(f"COMMAND ERROR: {item['name']} does not exist for command MOD\r\n")
+                return
+            funds_to_check, temp = check_fund(item_old, [], [])
+            if funds_to_check:
+                log.write(f"WARNING: Potential change to fund {item['name']} before MOD command\n")
             item['checksum'] = None
             item['urls_to_check'] = None
             item['access_failures'] = 0
