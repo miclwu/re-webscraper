@@ -6,7 +6,7 @@ import time
 import sqlite3
 from requests.exceptions import HTTPError, Timeout
 from utilities import csv_to_dict, dict_to_csv, dbtable_to_dict, dict_update_dbtable
-from utilities import db_validate_fieldnames, db_insert, db_update, db_delete
+from utilities import db_insert, db_update, db_delete, db_get_row
 
 # TODO:
 # - cleanup and refactor code
