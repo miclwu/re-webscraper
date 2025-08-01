@@ -43,19 +43,19 @@ DELIM = ';;'
 
 DATABASE = 'webscraper.db'
 FUNDS_TABLE = 'funds'
-INPUT_DIR_PATH = 'inputs'
+INFILE_DIR = 'inputs'
 INFILE_TEMPLATE  = 'input_X.csv'
 OUTFILE = 'checkfunds.csv'
 AUDITLOG = 'auditlog.txt'
 
 def queue_inputs():
-    if not os.path.isdir(INPUT_DIR_PATH):
+    if not os.path.isdir(INFILE_DIR):
         print(f"Input directory not found. Unable to locate inputs.")
 
     inputs = []
     i = 1
     while True:
-        infile = f"{INPUT_DIR_PATH}/{INFILE_TEMPLATE.replace('X', str(i))}"
+        infile = f"{INFILE_DIR}/{INFILE_TEMPLATE.replace('X', str(i))}"
         if not os.path.isfile(infile):
             print(f"Input files: {i - 1}")
             break
