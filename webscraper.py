@@ -208,25 +208,27 @@ def check_fund(fund, funds_to_check, funds_to_update):
 def main():
     inputs = queue_inputs()
 
+    conn = sqlite3.connect(DATABASE)
+
     if inputs:
-        conn = sqlite3.connect(DATABASE)
         auditlog = open(AUDITLOG, "w")
 
         for item in inputs:
             exec_cmd(conn, auditlog, item)
 
-        conn.close()
         auditlog.close()
 
-    funds = dbtable_to_dict(DATABASE, FUNDS_TABLE)
+    funds = dbtable_to_dict(conn, FUNDS_TABLE)
     funds_to_check = []
     funds_to_update = []
 
     for item in funds:
         funds_to_check, funds_to_update = check_fund(item, funds_to_check, funds_to_update)
     
-    dict_update_dbtable(funds_to_update, DATABASE, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'])
+    dict_update_dbtable(conn, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'], funds_to_update)
     dict_to_csv(funds_to_check, OUTFILE, FIELDNAMES)
+
+    conn.close()
 
 if __name__ == "__main__":
     main()
