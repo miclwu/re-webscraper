@@ -68,7 +68,13 @@ def dict_update_dbtable(data, database, table, fieldnames):
     for row in data:
         cur.execute(f"UPDATE {table} SET {updates} WHERE id = :id", row)
     conn.commit()
-    conn.close()
+
+def db_get_row(conn, table, fieldnames, identifier_val, identifier_key='name'):
+    cur = conn.cursor()
+    cur.row_factory = db_dict_factory
+    fieldstr = ', '.join(fieldnames)
+    res = cur.execute(f"SELECT {fieldstr} FROM {table} WHERE {identifier_key} = ?", (identifier_val,))
+    return res.fetchone()
 
 def db_insert(conn, table, dictobj):
     cur = conn.cursor()
