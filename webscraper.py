@@ -48,6 +48,9 @@ INFILE_TEMPLATE  = 'input_X.csv'
 OUTFILE = 'checkfunds.csv'
 AUDITLOG = 'auditlog.txt'
 
+# Looks for input files (csv) in the directory INFILE_DIR
+# Converts each line of each file into a dict representing a command
+# Returns the list of commands
 def queue_inputs():
     if not os.path.isdir(INFILE_DIR):
         print(f"Input directory not found. Unable to locate inputs.")
@@ -67,6 +70,8 @@ def queue_inputs():
         i += 1
     return inputs
 
+# Executes the command, 'item', performing corresponding operation on db
+# Prints executed commands (or error messages) to 'log'
 def exec_cmd(conn, log, item):
     if set(item.keys()) != {'command', 'name', 'url', 'status'}:
         log.write('INPUT FILE ERROR: Invalid set of column headers\r\n')
@@ -83,11 +88,14 @@ def exec_cmd(conn, log, item):
     if item['status'] not in STATUSES and cmd != 'DEL':
         log.write(f"INPUT ERROR: Invalid status: \"{item['status']}\" for command: {cmd} {item['name']}\r\n")
         return
+    
     try:
         if cmd == 'ADD':
             db_insert(conn, FUNDS_TABLE, item)
             log.write(f"ADD: {item['name']}\r\n")
+
         elif cmd == 'MOD':
+            # Precheck to catch page changes since last check
             item_old = db_get_row(conn, FUNDS_TABLE, ('name', 'url', 'status', 'checksum', 'urls_to_check', 'access_failures'), item['name'])
             if not item_old:
                 log.write(f"COMMAND ERROR: {item['name']} does not exist for command MOD\r\n")
@@ -95,14 +103,18 @@ def exec_cmd(conn, log, item):
             funds_to_check, temp = check_fund(item_old, [], [])
             if funds_to_check:
                 log.write(f"WARNING: Potential change to fund {item['name']} before MOD command\n")
+
+            # Execute MOD
             item['checksum'] = None
             item['urls_to_check'] = None
             item['access_failures'] = 0
             db_update(conn, FUNDS_TABLE, item)
             log.write(f"MOD: {item['name']}, {item['url']}, {item['status']}\r\n")
+
         elif cmd == 'DEL':
             db_delete(conn, FUNDS_TABLE, 'name', item['name'])
             log.write(f"DEL: {item['name']}\r\n")
+
         else:
             log.write(f"INPUT ERROR: Invalid command: {cmd.upper()} {item['name']}\r\n")
 
@@ -111,6 +123,9 @@ def exec_cmd(conn, log, item):
     except Exception as e:
         print(f"Encountered exception: {e}")
 
+# Connects to 'url' and returns bs4 object, if possible
+# Retries up to 'retries' times with a backoff factor of 'backoff'
+# Returns None on failure
 def get_soup(url, retries= 3, backoff= 2):
     for attempt in range(retries):
         try:
@@ -145,6 +160,10 @@ def get_soup(url, retries= 3, backoff= 2):
             return None
     return None
 
+# Checks a fund for page changes by comparing page checksum data for each url
+# If page change was detected, appends 'fund' to 'funds_to_check'
+# If any field for 'fund' needs to be updated in the db, appends it to 'funds_to_update'
+# Returns the updated lists of 'funds_to_check' and 'funds_to_update'
 def check_fund(fund, funds_to_check, funds_to_update):
     urls = fund['url'].split(DELIM)
     urls_to_check = set(fund['urls_to_check'].split(DELIM)) if fund['urls_to_check'] else set()
@@ -158,6 +177,7 @@ def check_fund(fund, funds_to_check, funds_to_update):
         soup = get_soup(urls[i])
 
         if not soup:
+            # Unable to scrape url
             need_update = True
             failed_connect = True
             fund['access_failures'] += 1
@@ -168,8 +188,10 @@ def check_fund(fund, funds_to_check, funds_to_update):
             checksums.append(old_checksums[i])
             print(f"{fund['name']}, {fund['status'].upper()} FUND: URL {i+1}: Failed to connect.")
         else:
+            # Successful url scrape
+            # Checksum remove page whitespace, checksum remaining text and add to list
             checksums.append(hashlib.sha256(''.join(soup.body.text.split()).encode('utf-8')).hexdigest())
-        
+
             if not old_checksums[i]:
                 need_update = True
                 print(f"{fund['name']}, {fund['status'].upper()} FUND: URL {i+1}: Adding new checksum.")
@@ -181,7 +203,7 @@ def check_fund(fund, funds_to_check, funds_to_update):
                 print(f"{fund['name']}, {fund['status'].upper()} FUND: URL {i+1}: Checksums match.")
     
     if not failed_connect:
-        fund['access_failures'] = 0            
+        fund['access_failures'] = 0
     
     if need_update:
         fund['checksum'] = DELIM.join(checksums)
@@ -196,6 +218,12 @@ def check_fund(fund, funds_to_check, funds_to_update):
 
     return funds_to_check, funds_to_update
 
+# Main loop:
+# Queue input commands
+# Execute input commands
+# Check each fund in database
+# Update database
+# Write funds that need to be checked to output file
 def main():
     inputs = queue_inputs()
 
