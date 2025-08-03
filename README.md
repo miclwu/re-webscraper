@@ -9,7 +9,8 @@ Arguments (global variables in `webscraper.py`):
 - `INFILE_TEMPLATE`: The template name for input files, with `X`s representing digits (e.g. input_X --> input_31)
 - `OUTFILE`: The name of the output file
 - `AUDITLOG`: The name of the audit log file
-- `FIELDNAMES`: The headers for the fields of the output file
+- `INPUT_COLS`: The column names of the input file(s)
+- `OUTPUT_COLS`: The column names of the output file
 - `OPEN`: The string representing the OPEN status
 - `CLOSED`: The string representing the CLOSED status
 - `CHECK`: The string representing the CHECK REQUIRED status
