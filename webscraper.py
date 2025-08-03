@@ -31,7 +31,8 @@ HEADERS = {
     'Accept-Language': 'en-US,en;q=0.9'
 }
 
-FIELDNAMES = ['name', 'url', 'status', 'urls_to_check']
+INPUT_COLS = ('command', 'name', 'url', 'status')
+OUTPUT_COLS = ('name', 'url', 'status', 'urls_to_check')
 
 OPEN = 'Open'
 CLOSED = 'Closed'
@@ -44,8 +45,8 @@ DELIM = ';;'
 DATABASE = 'webscraper.db'
 FUNDS_TABLE = 'funds'
 INFILE_DIR = 'inputs'
-INFILE_TEMPLATE  = 'input_X.csv'
-OUTFILE = 'checkfunds.csv'
+INFILE_TEMPLATE  = 'input_X.xlsx'
+OUTFILE = 'checkfunds.xlsx'
 AUDITLOG = 'auditlog.txt'
 
 # Looks for input files (csv) in the directory INFILE_DIR
@@ -63,7 +64,7 @@ def queue_inputs():
             print(f"Input files: {i - 1}")
             break
         try:
-            inputs.extend(csv_to_dict(infile))
+            inputs.extend(xlsx_to_records(infile, usecols=INPUT_COLS))
         except Exception as e:
             print(f"webscraper.py: queue_inputs(): Exception: {e}")
             break
@@ -244,8 +245,10 @@ def main():
     for item in funds:
         funds_to_check, funds_to_update = check_fund(item, funds_to_check, funds_to_update)
     
-    dict_update_dbtable(conn, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'], funds_to_update)
-    dict_to_csv(funds_to_check, OUTFILE, FIELDNAMES)
+    if funds_to_update:
+        dict_update_dbtable(conn, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'], funds_to_update)
+    if funds_to_check:
+        records_to_xlsx(funds_to_check, OUTFILE, OUTPUT_COLS)
 
     conn.close()
 
