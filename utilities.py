@@ -91,8 +91,14 @@ def db_update(conn, table, dictobj, identifier_index=0):
     cur.execute(f"UPDATE {table} SET {updatestr} WHERE {identifier} = :{identifier}", dictobj)
     conn.commit()
 
-def csv_to_dict(infile):
-    data = []
+def xlsx_to_records(infile, usecols=None):
+    df = pd.read_excel(infile, usecols=usecols)
+    df.replace(np.nan, None, inplace=True)
+    return df.to_dict(orient='records')
+
+def records_to_xlsx(records, outfile, usecols=None):
+    df = pd.DataFrame.from_records(records)
+    df.to_excel(outfile, columns=usecols, index=False)
     with open(infile, 'r') as f:
         reader = csv.DictReader(f)
         for row in reader:
