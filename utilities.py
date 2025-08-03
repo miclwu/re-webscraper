@@ -99,6 +99,19 @@ def xlsx_to_records(infile, usecols=None):
 def records_to_xlsx(records, outfile, usecols=None):
     df = pd.DataFrame.from_records(records)
     df.to_excel(outfile, columns=usecols, index=False)
+
+def prune_records(records, usecols):
+    rcpy = []
+    for row in records:
+        dictcpy = dict()
+        for key in row:
+            if key in usecols:
+                dictcpy[key] = row[key]
+        rcpy.append(dictcpy)
+    return rcpy
+
+def csv_to_records(infile):
+    records = []
     with open(infile, 'r') as f:
         reader = csv.DictReader(f)
         for row in reader:
