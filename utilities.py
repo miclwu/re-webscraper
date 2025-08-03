@@ -3,10 +3,6 @@ import pandas as pd
 import numpy as np
 import json
 
-# TODO:
-# - Refactor validation to separate function
-# - Standardize db functions
-
 class InvalidInputError(ValueError):
     """Errors raised for invalid input"""
     pass
