@@ -52,7 +52,7 @@ AUDITLOG = 'auditlog.txt'
 # Looks for input files (csv) in the directory INFILE_DIR
 # Converts each line of each file into a dict representing a command
 # Returns the list of commands
-def queue_inputs():
+def queue_inputs(log):
     if not os.path.isdir(INFILE_DIR):
         print(f"Input directory not found. Unable to locate inputs.")
 
@@ -65,6 +65,9 @@ def queue_inputs():
             break
         try:
             inputs.extend(xlsx_to_records(infile, usecols=INPUT_COLS))
+        except ValueError as e:
+            log.write('INPUT FILE ERROR: Incomplete set of column headers, requires: (command, name, url, status)\r\n')
+            print(f"webscraper.py: queue_inputs(): Invalid column headers")
         except Exception as e:
             print(f"webscraper.py: queue_inputs(): Exception: {e}")
             break
@@ -226,17 +229,17 @@ def check_fund(fund, funds_to_check, funds_to_update):
 # Update database
 # Write funds that need to be checked to output file
 def main():
-    inputs = queue_inputs()
+    auditlog = open(AUDITLOG, 'w')
+    inputs = queue_inputs(auditlog)
 
     conn = sqlite3.connect(DATABASE)
 
-    if inputs:
-        auditlog = open(AUDITLOG, 'w')
+    auditlog = open(AUDITLOG, 'w')
 
-        for item in inputs:
-            exec_cmd(conn, auditlog, item)
+    for item in inputs:
+        exec_cmd(conn, auditlog, item)
 
-        auditlog.close()
+    auditlog.close()
 
     funds = dbtable_to_dict(conn, FUNDS_TABLE)
     funds_to_check = []
