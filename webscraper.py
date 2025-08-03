@@ -77,10 +77,6 @@ def queue_inputs(log):
 # Executes the command, 'item', performing corresponding operation on db
 # Prints executed commands (or error messages) to 'log'
 def exec_cmd(conn, log, item):
-    if set(item.keys()) != {'command', 'name', 'url', 'status'}:
-        log.write('INPUT FILE ERROR: Invalid set of column headers\r\n')
-        return
-
     cmd = item.pop('command').upper()
 
     if cmd not in ('ADD', 'MOD', 'DEL'):
@@ -121,9 +117,6 @@ def exec_cmd(conn, log, item):
         else:   # cmd == 'DEL'
             db_delete(conn, FUNDS_TABLE, 'name', item['name'])
             log.write(f"DEL: {item['name']}\r\n")
-
-        else:
-            log.write(f"INPUT ERROR: Invalid command: {cmd.upper()} {item['name']}\r\n")
 
     except sqlite3.IntegrityError as e:
         log.write(f"INTEGRITY ERROR: {cmd} {item['name']}: {e}\r\n")
