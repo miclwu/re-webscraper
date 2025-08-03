@@ -5,7 +5,7 @@ import os
 import time
 import sqlite3
 from requests.exceptions import HTTPError, Timeout
-from utilities import csv_to_dict, dict_to_csv, dbtable_to_dict, dict_update_dbtable
+from utilities import xlsx_to_records, records_to_xlsx, dbtable_to_records, records_update_dbtable
 from utilities import db_insert, db_update, db_delete, db_get_row
 
 # TODO:
@@ -241,7 +241,7 @@ def main():
 
     auditlog.close()
 
-    funds = dbtable_to_dict(conn, FUNDS_TABLE)
+    funds = dbtable_to_records(conn, FUNDS_TABLE)
     funds_to_check = []
     funds_to_update = []
 
@@ -249,7 +249,7 @@ def main():
         funds_to_check, funds_to_update = check_fund(item, funds_to_check, funds_to_update)
     
     if funds_to_update:
-        dict_update_dbtable(conn, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'], funds_to_update)
+        records_update_dbtable(conn, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'], funds_to_update)
     if funds_to_check:
         records_to_xlsx(funds_to_check, OUTFILE, OUTPUT_COLS)
 
