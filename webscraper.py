@@ -83,6 +83,9 @@ def exec_cmd(conn, log, item):
 
     cmd = item.pop('command').upper()
 
+    if cmd not in ('ADD', 'MOD', 'DEL'):
+        log.write(f"INPUT ERROR: Invalid command: {cmd.upper()} {item['name']}\r\n")
+        return
     if not item['name']:
         log.write(f"INPUT ERROR: Empty name for command {cmd}\r\n")
         return
@@ -115,7 +118,7 @@ def exec_cmd(conn, log, item):
             db_update(conn, FUNDS_TABLE, item)
             log.write(f"MOD: {item['name']}, {item['url']}, {item['status']}\r\n")
 
-        elif cmd == 'DEL':
+        else:   # cmd == 'DEL'
             db_delete(conn, FUNDS_TABLE, 'name', item['name'])
             log.write(f"DEL: {item['name']}\r\n")
 
