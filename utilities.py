@@ -133,12 +133,3 @@ def csv_clear_field(infile, outfile, usecols, field):
     for item in records:
         item[field] = None
     records_to_csv(records, outfile, usecols=usecols)
-
-def json_to_dict(infile):
-    with open(infile, 'r') as f:
-        dictobj = json.load(f)
-    return dictobj
-
-def dict_to_json(dictobj, outfile, indent=4):
-    with open(outfile, 'w') as f:
-        json.dump(dictobj, f, indent=indent)
