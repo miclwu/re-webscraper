@@ -29,14 +29,12 @@ def db_dict_factory(cursor, row):
 def dbtable_to_records(conn, table):
     records = []
     cur = conn.cursor()
-    res = cur.execute('SELECT name FROM sqlite_master')
-    if (table,) not in res.fetchall():
-        conn.close()
-        raise InvalidInputError(f"Table '{table}' not found")
+    db_validate_table(conn, table)
     
     cur.row_factory = db_dict_factory
     cur.execute(f"SELECT * FROM {table}")
 
+    records = []
     for row in cur:
         records.append(row)
     return records
