@@ -65,13 +65,13 @@ def db_insert(conn, table, dictobj):
     cur = conn.cursor()
     keystr = ''
     valstr = ''
-    for key in dictobj.keys():
+    for key in row.keys():
         keystr += f"{key}, "
         valstr += f":{key}, "
     keystr = keystr.rstrip(', ')
     valstr = valstr.rstrip(', ')
 
-    cur.execute(f"INSERT INTO {table} ({keystr}) VALUES ({valstr})", dictobj)
+    cur.execute(f"INSERT INTO {table} ({keystr}) VALUES ({valstr})", row)
     conn.commit()
 
 def db_delete(conn, table, key, val):
@@ -82,11 +82,10 @@ def db_delete(conn, table, key, val):
 def db_update(conn, table, dictobj, identifier_index=0):
     cur = conn.cursor()
     updatestr = ''
-    for key in dictobj.keys():
+    for key in row.keys():
         updatestr += f"{key} = :{key}, "
     updatestr = updatestr.rstrip(", ")
-    identifier = list(dictobj.keys())[identifier_index]
-    cur.execute(f"UPDATE {table} SET {updatestr} WHERE {identifier} = :{identifier}", dictobj)
+    cur.execute(f"UPDATE {table} SET {updatestr} WHERE {identifier_key} = :{identifier_key}", row)
     conn.commit()
 
 def xlsx_to_records(infile, usecols=None):
