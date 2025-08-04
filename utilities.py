@@ -5,16 +5,40 @@ import sqlite3
 from typing import *
 
 class InvalidInputError(ValueError):
-    """Errors raised for invalid input"""
+    """Exception to be raised when database functions are passed invalid input."""
     pass
 
-def db_validate_table(conn, table):
+def db_validate_table(
+    conn: sqlite3.Connection,
+    table: str
+) -> None:
+    """Check if `table` is in the database opened via `conn` and raise `InvalidInputError` if not.
+
+    Args:
+        conn: An open connection to an sqlite3 database
+        table: The name of a table that may be in the database
+    Raises:
+        InvalidInputError: `table` is not in database opened via `conn` 
+    """
     cur = conn.cursor()
     res = cur.execute('SELECT name FROM sqlite_master')
     if (table,) not in res.fetchall():
         raise InvalidInputError('Table not found')
 
-def db_validate_cols(conn, table, cols):
+def db_validate_cols(
+    conn: sqlite3.Connection,
+    table: str,
+    cols: list | tuple | set
+) -> None:
+    """Check if each column in `cols` is present in `table`.
+
+    Args:
+        conn: An open connection to an sqlite3 database
+        table: The name of a table that is assumed to be in the database
+        cols: The list of columns to be validated
+    Raises:
+        InvalidInputError: Any column in `cols` is not present in `table`
+    """
     cur = conn.cursor()
     res = cur.execute(f"PRAGMA table_info({table})")
     db_cols = [colinfo[1] for colinfo in res.fetchall()]
@@ -27,8 +51,18 @@ def db_dict_factory(cursor, row):
     fields = [column[0] for column in cursor.description]
     return {key: value for key, value in zip(fields, row)}
 
-def dbtable_to_records(conn, table):
-    records = []
+def dbtable_to_records(
+    conn: sqlite3.Connection,
+    table: str
+) -> list[dict[str, Any]]:
+    """Convert a database table to a records (list of dicts) object.
+
+    Args:
+        conn: An open connection to an sqlite3 database
+        table: The name of a table in the database
+    Returns:
+        records: A list of dicts, each dict representing a row in `table`
+    """
     cur = conn.cursor()
     db_validate_table(conn, table)
     
@@ -40,7 +74,23 @@ def dbtable_to_records(conn, table):
         records.append(row)
     return records
 
-def records_update_dbtable(conn, table, cols, records):
+def records_update_dbtable(
+    conn: sqlite3.Connection,
+    table: str,
+    cols: list | tuple | set,
+    records: list[dict[str, Any]]
+) -> None:
+    """Update `table` in the database using `records`.
+
+    Replace each row in `table` with a row in `records`, if row ids match.
+    Only updates the columns of each row listed in `cols`.
+
+    Args:
+        conn: An open connection to an sqlite3 database
+        table: The name of a table in the database
+        cols: The list of columns to be updated
+        records: The incoming data, where each dict represents a row to be updated
+    """
     cur = conn.cursor()
     db_validate_table(conn, table)
     db_validate_cols(conn, table, cols)
@@ -53,14 +103,45 @@ def records_update_dbtable(conn, table, cols, records):
         cur.execute(f"UPDATE {table} SET {updates} WHERE id = :id", row)
     conn.commit()
 
-def db_get_row(conn, table, cols, identifier_val, identifier_key='name'):
+def db_get_row(
+    conn: sqlite3.Connection,
+    table: str,
+    cols: list | tuple | set,
+    identifier_val: Any,
+    identifier_key: str ='name'
+) -> dict[str, Any]:
+    """Fetch certain columns of a row from `table` based on an identifier key-value pair.
+
+    Args:
+        conn: An open connection to an sqlite3 database
+        table: The name of a table in the database
+        cols: The list of columns to be fetched from the fetched row
+        identifier_key: The column that `identifier_val` belongs to
+        identifier_val: The value matched to a row in `table`
+    Returns:
+        A dict representing the fetched row from `table`.
+    """
     cur = conn.cursor()
     cur.row_factory = db_dict_factory
     fieldstr = ', '.join(cols)
     res = cur.execute(f"SELECT {fieldstr} FROM {table} WHERE {identifier_key} = ?", (identifier_val,))
     return res.fetchone()
 
-def db_insert(conn, table, dictobj):
+def db_insert(
+    conn: sqlite3.Connection,
+    table: str,
+    row: dict[str, Any]
+) -> None:
+    """Insert `row` into `table`.
+
+    If `table` requires certain columns to not be NULL, then `row` should contain
+    those columns. Additionally, `row` need not contain columns that can be NULL.
+
+    Args:
+        conn: An open connection to an sqlite3 database
+        table: The name of a table in the database
+        row: A dict representing a row to be added to `table`
+    """
     cur = conn.cursor()
     keystr = ''
     valstr = ''
@@ -73,12 +154,43 @@ def db_insert(conn, table, dictobj):
     cur.execute(f"INSERT INTO {table} ({keystr}) VALUES ({valstr})", row)
     conn.commit()
 
-def db_delete(conn, table, key, val):
+def db_delete(
+    conn: sqlite3.Connection,
+    table: str,
+    identifier_key: str,
+    identifier_val: Any
+) -> None:
+    """Delete the row from `table` matched by the identifier key-value pair.
+
+    Args:
+        conn: An open connection to an sqlite3 database
+        table: The name of a table in the database
+        identifier_key: The column that `identifier_val` belongs to
+        identifier_val: The value matched to a row in `table`
+    """
     cur = conn.cursor()
-    cur.execute(f"DELETE FROM {table} WHERE {key} = ?", (val, ))
+    cur.execute(f"DELETE FROM {table} WHERE {identifier_key} = ?", (identifier_val, ))
     conn.commit()
 
-def db_update(conn, table, dictobj, identifier_index=0):
+def db_update(
+    conn: sqlite3.Connection,
+    table: str,
+    row: dict[str, Any],
+    identifier_key: str = 'name'
+) -> None:
+    """Update a specific row in `table`.
+
+    Matches `row` to a row in `table` using the key-value pair of
+    `identifier_key`: `row[identifier_key]`. Replace each column
+    of the matched row in `table` with the corresponding column
+    in `row`.
+
+    Args:
+        conn: An open connection to an sqlite3 database
+        table: The name of a table in the database
+        row: A dict representing the new columns of a row in `table`
+        identifier_key: The column used to match `row` to a row in `table`
+    """
     cur = conn.cursor()
     updatestr = ''
     for key in row.keys():
@@ -87,16 +199,49 @@ def db_update(conn, table, dictobj, identifier_index=0):
     cur.execute(f"UPDATE {table} SET {updatestr} WHERE {identifier_key} = :{identifier_key}", row)
     conn.commit()
 
-def xlsx_to_records(infile, usecols=None):
+def xlsx_to_records(
+    infile: str,
+    usecols: list | tuple | set | None =None
+) -> list[dict[str, Any]]:
+    """Convert the contents of a .xlsx file to records (list of dicts).
+
+    Args:
+        infile: The name of the .xlsx file to be parsed
+        usecols: The list of columns to be included in the output `records`
+    Returns:
+        records: A list of dicts, each dict representing a row of `infile`
+    """
     df = pd.read_excel(infile, usecols=usecols)
     df.replace(np.nan, None, inplace=True)
     return df.to_dict(orient='records')
 
-def records_to_xlsx(records, outfile, usecols=None):
+def records_to_xlsx(
+    records: list[dict[str, Any]],
+    outfile: str,
+    usecols: list | tuple | set | None =None
+) -> None:
+    """Write records (list of dicts) to an .xlsx file.
+
+    Args:
+        records: A list of dicts, each dict representing a row in a table
+        outfile: The name of the .xlsx file to be written to
+        usecols: The list of columns to be included in `outfile`
+    """
     df = pd.DataFrame.from_records(records)
     df.to_excel(outfile, columns=usecols, index=False)
 
-def prune_records(records, usecols):
+def prune_records(
+    records: list[dict[str, Any]],
+    usecols: list | tuple | set | None =None
+) -> list[dict[str, Any]]:
+    """Remove key-value pairs from each dict in `records` if the key is not in `usecols`.
+    
+    Args:
+        records: A list of dicts, each dict representing a row in a table
+        usecols: The columns of the output (pruned) `records` object
+    Returns:
+        A pruned `records` object, with only the columns in `usecols`
+    """
     rcpy = []
     for row in records:
         dictcpy = dict()
