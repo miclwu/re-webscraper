@@ -16,6 +16,9 @@ from utilities import db_insert, db_update, db_delete, db_get_row
 #       - delete funds X
 #       - modify funds X
 #       - get funds table
+#       - restore table?
+# - backup system
+# - email input/output script
 # - report fund amount if possible
 #   - 2 new fields: fund amount and path/id to html element containing fund amount (or maybe find it thru api?)
 # - deployment
