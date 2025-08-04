@@ -20,6 +20,19 @@ Arguments (global variables in `webscraper.py`):
 
 Run `webscraper.py` in the same directory as `DATABASE`, `INFILE_DIR`, and `AUDITLOG`.
 
+## Database information
+
+`webscraper.py` uses an sqlite3 database, called `DATABASE`.
+
+The database contains the following columns:
+- `id`: integer, primary key
+- `name`: text, unique, not NULL; The name of the fund
+- `url`: text, not NULL; The url(s) associated with a fund
+- `status`: text, not NULL; The status of the fund
+- `checksum`: text; The checksum(s) of each url associated with a fund
+- `urls_to_check`: text; The url(s) that need to be checked
+- `access_failures`: integer, default 0; The number of times the scraper has failed to access a url in a fund, resetting each time all urls in the fund are accessed successfully.
+
 ## python env
 
     python3 -m venv ENV_NAME
