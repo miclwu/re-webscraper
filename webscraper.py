@@ -7,6 +7,7 @@ import sqlite3
 from requests.exceptions import HTTPError, Timeout
 from utilities import xlsx_to_records, records_to_xlsx, dbtable_to_records, records_update_dbtable
 from utilities import db_insert, db_update, db_delete, db_get_row
+from typing import Any
 
 # TODO:
 # - revamp input/output system (function and tolerance)
@@ -52,10 +53,19 @@ INFILE_TEMPLATE  = 'input_X.xlsx'
 OUTFILE = 'checkfunds.xlsx'
 AUDITLOG = 'auditlog.txt'
 
-# Looks for input files (csv) in the directory INFILE_DIR
-# Converts each line of each file into a dict representing a command
-# Returns the list of commands
-def queue_inputs(log):
+def queue_inputs(
+    log: str
+) -> list[dict[str, Any]]:
+    """Convert input files (xlsx) located in `INFILE_DIR` to records (list of dicts)
+
+    Each row of an input file contains the columns: 'command', 'name', 'url', 'status' at minimum.
+    Errors are printed to the audit log, `log`.
+
+    Args:
+        log: The name of the opened audit log to be written to
+    Returns:
+        A list of dicts, with each dict representing an input command
+    """
     if not os.path.isdir(INFILE_DIR):
         print(f"Input directory not found. Unable to locate inputs.")
 
@@ -77,9 +87,20 @@ def queue_inputs(log):
         i += 1
     return inputs
 
-# Executes the command, 'item', performing corresponding operation on db
-# Prints executed commands (or error messages) to 'log'
-def exec_cmd(conn, log, item):
+def exec_cmd(
+    conn: sqlite3.Connection,
+    log: str,
+    item: dict[str, Any]
+) -> None:
+    """Execute the command, represented by the dict `item`, on the database.
+
+    Validate command before execution. Print executed commands (or error messages) to `log`.
+
+    Args:
+        conn: An open connection to an sqlite3 database
+        log: The name of the opened audit log to be written to
+        item: A dict representing an operation to be performed on the database
+    """
     cmd = item.pop('command').upper()
 
     if cmd not in ('ADD', 'MOD', 'DEL'):
@@ -126,10 +147,20 @@ def exec_cmd(conn, log, item):
     except Exception as e:
         print(f"Encountered exception: {e}")
 
-# Connects to 'url' and returns bs4 object, if possible
-# Retries up to 'retries' times with a backoff factor of 'backoff'
-# Returns None on failure
-def get_soup(url, retries= 3, backoff= 2):
+def get_soup(
+    url: str,
+    retries= 3,
+    backoff= 2
+) -> BeautifulSoup | None:
+    """Scrape html from `url` and return BeautifulSoup object, if possible.
+
+    Args:
+        url: The url to scrape
+        retries: The number of retry attempts, if html request fails
+        backoff: The backoff factor, used to calculate wait time between retries
+    Returns:
+        A BeautifulSoup object of the html from `url`, or None on failure
+    """
     for attempt in range(retries):
         try:
             response = requests.get(url, headers=HEADERS, timeout=(3.1, 15.1))
@@ -163,11 +194,22 @@ def get_soup(url, retries= 3, backoff= 2):
             return None
     return None
 
-# Checks a fund for page changes by comparing page checksum data for each url
-# If page change was detected, appends 'fund' to 'funds_to_check'
-# If any field for 'fund' needs to be updated in the db, appends it to 'funds_to_update'
-# Returns the updated lists of 'funds_to_check' and 'funds_to_update'
-def check_fund(fund, funds_to_check, funds_to_update):
+def check_fund(
+    fund: dict[str, Any],
+    funds_to_check: list[dict[str, Any]],
+    funds_to_update: list[dict[str, Any]]
+) -> None:
+    """Check a fund for page changes by comparing page checksum data for each url.
+
+    If page change detected, append `fund` to `funds_to_check`. Append `fund` to
+    `funds_to_update` if any column in `fund` does not match the same column for the
+    version of `fund` in the database.
+
+    Args:
+        fund: A dict representing a fund's info / a row in the database
+        funds_to_check: A list of funds that need to be checked
+        funds_to_update: A list of funds that need to be updated
+    """
     urls = fund['url'].split(DELIM)
     urls_to_check = set(fund['urls_to_check'].split(DELIM)) if fund['urls_to_check'] else set()
     old_checksums = fund['checksum'].split(DELIM) if fund['checksum'] else ['' for u in urls]
