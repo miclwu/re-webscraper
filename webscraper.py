@@ -127,7 +127,8 @@ def exec_cmd(
             if not item_old:
                 log.write(f"COMMAND ERROR: {item['name']} does not exist for command MOD\r\n")
                 return
-            funds_to_check, temp = check_fund(item_old, [], [])
+            funds_to_check = []
+            check_fund(item_old, funds_to_check, [])
             if funds_to_check:
                 log.write(f"WARNING: Potential change to fund {item['name']} before MOD command\n")
 
@@ -261,8 +262,6 @@ def check_fund(
     if fund['status'] == CHECK:
         funds_to_check.append(fund)
 
-    return funds_to_check, funds_to_update
-
 # Main loop:
 # Queue input commands
 # Execute input commands
@@ -287,7 +286,7 @@ def main():
     funds_to_update = []
 
     for item in funds:
-        funds_to_check, funds_to_update = check_fund(item, funds_to_check, funds_to_update)
+        check_fund(item, funds_to_check, funds_to_update)
     
     if funds_to_update:
         records_update_dbtable(conn, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'], funds_to_update)
