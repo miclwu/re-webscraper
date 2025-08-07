@@ -71,29 +71,33 @@ def queue_inputs(
 def exec_cmd(
     conn: sqlite3.Connection,
     log: str,
-    item: dict[str, Any]
+    item: dict[str, Any],
+    table_reqs: list[str]
 ) -> None:
     """Execute the command, represented by the dict `item`, on the database.
 
     Validate command before execution. Print executed commands (or error messages) to `log`.
+    If command is a table request ('REQ'), append requested table name to `table_reqs`, if
+    valid.
 
     Args:
         conn: An open connection to an sqlite3 database
         log: The name of the opened audit log to be written to
         item: A dict representing an operation to be performed on the database
+        table_reqs: List of requested table names
     """
     cmd = item.pop('command').upper()
 
-    if cmd not in ('ADD', 'MOD', 'DEL'):
+    if cmd not in ('ADD', 'MOD', 'DEL', 'REQ'):
         log.write(f"INPUT ERROR: Invalid command: {cmd.upper()} {item['name']}\r\n")
         return
     if not item['name']:
         log.write(f"INPUT ERROR: Empty name for command {cmd}\r\n")
         return
-    if not item['url']:
+    if not item['url'] and (cmd == 'ADD' or cmd == 'MOD'):
         log.write(f"INPUT ERROR: Empty URL for command {cmd} {item['name']}\r\n")
         return
-    if item['status'] not in STATUSES and cmd != 'DEL':
+    if item['status'] not in STATUSES and (cmd == 'ADD' and cmd == 'MOD'):
         log.write(f"INPUT ERROR: Invalid status: \"{item['status']}\" for command: {cmd} {item['name']}\r\n")
         return
     
@@ -120,12 +124,20 @@ def exec_cmd(
             db_update(conn, FUNDS_TABLE, item)
             log.write(f"MOD: {item['name']}, {item['url']}, {item['status']}\r\n")
 
-        else:   # cmd == 'DEL'
+        elif cmd == 'DEL':
             db_delete(conn, FUNDS_TABLE, 'name', item['name'])
             log.write(f"DEL: {item['name']}\r\n")
+        
+        else:   # cmd == 'REQ'
+            table_name = item['name'].lower()
+            db_validate_table(conn, table_name)
+            table_reqs.append(table_name)
+            log.write(f"REQ: Table \"{table_name}\"\r\n")
 
     except sqlite3.IntegrityError as e:
         log.write(f"INTEGRITY ERROR: {cmd} {item['name']}: {e}\r\n")
+    except InvalidInputError as e:
+        log.write(f"INPUT ERROR: {cmd} {item['name']}: {e}\r\n")
     except Exception as e:
         print(f"Encountered exception: {e}")
 
