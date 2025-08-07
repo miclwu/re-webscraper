@@ -23,6 +23,7 @@ from constants import *
 #       - restore table?
 # - backup system
 # - email input/output script
+#   - validate users before processing input
 # - report fund amount if possible
 #   - 2 new fields: fund amount and path/id to html element containing fund amount (or maybe find it thru api?)
 # - deployment
