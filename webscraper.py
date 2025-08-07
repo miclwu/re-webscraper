@@ -1,13 +1,16 @@
 from bs4 import BeautifulSoup
 import requests
+import sqlite3
+import pandas as pd
 import hashlib
 import os
 import time
-import sqlite3
 from requests.exceptions import HTTPError, Timeout
 from utilities import xlsx_to_records, records_to_xlsx, dbtable_to_records, records_update_dbtable
-from utilities import db_insert, db_update, db_delete, db_get_row
+from utilities import db_validate_table, db_insert, db_update, db_delete, db_get_row
+from utilities import InvalidInputError
 from typing import Any
+from constants import *
 
 # TODO:
 # - revamp input/output system (function and tolerance)
