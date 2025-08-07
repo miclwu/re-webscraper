@@ -262,7 +262,7 @@ def check_fund(
 # Update database
 # Write funds that need to be checked to output file
 def main():
-    auditlog = open(AUDITLOG, 'w')
+    auditlog = open(AUDITLOG_PATH, 'w')
     inputs = queue_inputs(auditlog)
 
     conn = sqlite3.connect(DATABASE)
