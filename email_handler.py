@@ -92,3 +92,10 @@ def receive_email(
 
     return attachments
 
+def save_attachment(att, path):
+    if os.path.isfile(path):
+        raise FileExistsError
+    
+    with open(path, 'wb') as f:
+        f.write(att.get_payload(decode=True))
+
