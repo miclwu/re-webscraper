@@ -217,18 +217,19 @@ def xlsx_to_records(
 
 def records_to_xlsx(
     records: list[dict[str, Any]],
-    outfile: str,
-    usecols: list | tuple | set | None =None
+    out: Any,
+    usecols: list | tuple | set | None =None,
+    sheet_name: str ='Sheet 1'
 ) -> None:
     """Write records (list of dicts) to an .xlsx file.
 
     Args:
         records: A list of dicts, each dict representing a row in a table
-        outfile: The name of the .xlsx file to be written to
+        out: File path (.xlsx) or existing ExcelWriter to write to
         usecols: The list of columns to be included in `outfile`
     """
     df = pd.DataFrame.from_records(records)
-    df.to_excel(outfile, columns=usecols, index=False)
+    df.to_excel(out, columns=usecols, sheet_name=sheet_name, index=False)
 
 def prune_records(
     records: list[dict[str, Any]],
