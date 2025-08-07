@@ -53,3 +53,42 @@ def send_email(
         return False
     
     return True
+
+def receive_email(
+    host: str,
+    port: str,
+    recipient: str,
+    password: str,
+    mailbox: str ='INBOX',
+    flag: str ='UNSEEN',
+    attachment_ext: str ='.xlsx',
+):
+    mail = imaplib.IMAP4_SSL(host, port, ssl_context=ssl.create_default_context())
+    mail.login(recipient, password)
+    mail.select(mailbox)
+
+    status, data = mail.search(None, flag)
+    attachments = []
+
+    if status == 'OK':
+        for num in data[0].split():
+            status, data = mail.fetch(num, '(RFC822)')
+            msg = email.message_from_bytes(data[0][1], _class=email.message.EmailMessage)
+
+            for att in msg.iter_attachments():
+                fname = att.get_filename()
+                root, ext = os.path.splitext(fname)
+                if attachment_ext and ext == attachment_ext:
+                    attachments.append(att)
+
+            print('From:', msg['From'])
+            print('Subject:', msg['Subject'])
+            print('Date:', msg['Date'])
+            print('Body:', msg.get_payload())
+            print()
+
+    mail.close()
+    mail.logout()
+
+    return attachments
+
