@@ -267,10 +267,9 @@ def main():
 
     conn = sqlite3.connect(DATABASE)
 
-    auditlog = open(AUDITLOG, 'w')
-
+    table_reqs = []
     for item in inputs:
-        exec_cmd(conn, auditlog, item)
+        exec_cmd(conn, auditlog, item, table_reqs)
 
     auditlog.close()
 
@@ -283,8 +282,15 @@ def main():
     
     if funds_to_update:
         records_update_dbtable(conn, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'], funds_to_update)
-    if funds_to_check:
-        records_to_xlsx(funds_to_check, OUTFILE, OUTPUT_COLS)
+    
+    with pd.ExcelWriter(OUTFILE_PATH, engine='openpyxl') as writer:
+        if funds_to_check:
+            records_to_xlsx(funds_to_check, writer, OUTPUT_COLS, sheet_name='Funds to Check')
+        for req in table_reqs:
+            if req == FUNDS_TABLE:
+                records_to_xlsx(funds, writer, sheet_name=f"Table {FUNDS_TABLE}")
+            else:
+                records_to_xlsx(dbtable_to_records(conn, req), writer, sheet_name=f"Table {req}")
 
     conn.close()
 
