@@ -157,7 +157,7 @@ def get_soup(
     """
     for attempt in range(retries):
         try:
-            response = requests.get(url, headers=HEADERS, timeout=(3.1, 15.1))
+            response = requests.get(url, headers=HTTP_GET_HEADERS, timeout=(3.1, 15.1))
             if 'text/html' not in response.headers['content-type']:
                 raise TypeError
             response.raise_for_status()
