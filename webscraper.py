@@ -62,6 +62,7 @@ def queue_inputs(
             log.write('INPUT FILE ERROR: Incomplete set of column headers, requires: (command, name, url, status)\r\n')
             print(f"webscraper.py: queue_inputs(): Invalid column headers")
         except Exception as e:
+            log.write('INPUT FILE ERROR: Unable to parse file\r\n')
             print(f"webscraper.py: queue_inputs(): Exception: {e}")
             break
         i += 1
