@@ -111,7 +111,7 @@ def exec_cmd(
 
         elif cmd == 'MOD':
             # Precheck to catch page changes since last check
-            item_old = db_get_row(conn, FUNDS_TABLE, ('name', 'url', 'status', 'checksum', 'urls_to_check', 'access_failures'), item['name'])
+            item_old = db_get_row(conn, FUNDS_TABLE, DB_FUNDS_COLS, key='name', val=item['name'])
             if not item_old:
                 log.write(f"COMMAND ERROR: {item['name']} does not exist for command MOD\n\n")
                 return
@@ -124,11 +124,11 @@ def exec_cmd(
             item['checksum'] = None
             item['urls_to_check'] = None
             item['access_failures'] = 0
-            db_update(conn, FUNDS_TABLE, item)
+            db_update(conn, FUNDS_TABLE, item, key='name')
             log.write(f"MOD: {item['name']}, {item['url']}, {item['status']}\n\n")
 
         elif cmd == 'DEL':
-            db_delete(conn, FUNDS_TABLE, 'name', item['name'])
+            db_delete(conn, FUNDS_TABLE, 'name', key='name', val=item['name'])
             log.write(f"DEL: {item['name']}\n\n")
         
         else:   # cmd == 'REQ'
