@@ -52,6 +52,8 @@ def send_email(
     with smtplib.SMTP_SSL(host, port) as smtp:
         smtp.login(sender, password)
         smtp.send_message(msg)
+
+def receive_emails(
     host: str,
     port: str,
     recipient: str,
