@@ -5,6 +5,9 @@ import email
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
+from email.message import EmailMessage
+import sqlite3
+from utilities import db_get_row
 from constants import *
 
 def send_email(
