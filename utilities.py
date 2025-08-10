@@ -108,8 +108,8 @@ def db_get_row(
     conn: sqlite3.Connection,
     table: str,
     cols: list | tuple | set,
-    identifier_val: Any,
-    identifier_key: str ='name'
+    key: str,
+    val: Any,
 ) -> dict[str, Any]:
     """Fetch certain columns of a row from `table` based on an identifier key-value pair.
 
@@ -117,15 +117,15 @@ def db_get_row(
         conn: An open connection to an sqlite3 database
         table: The name of a table in the database
         cols: The list of columns to be fetched from the fetched row
-        identifier_key: The column that `identifier_val` belongs to
-        identifier_val: The value matched to a row in `table`
+        key: The column that `val` belongs to
+        val: The value matched to a row in `table`
     Returns:
         A dict representing the fetched row from `table`.
     """
     cur = conn.cursor()
     cur.row_factory = db_dict_factory
     fieldstr = ', '.join(cols)
-    res = cur.execute(f"SELECT {fieldstr} FROM {table} WHERE {identifier_key} = ?", (identifier_val,))
+    res = cur.execute(f"SELECT {fieldstr} FROM {table} WHERE {key} = ?", (val,))
     return res.fetchone()
 
 def db_insert(
@@ -158,31 +158,31 @@ def db_insert(
 def db_delete(
     conn: sqlite3.Connection,
     table: str,
-    identifier_key: str,
-    identifier_val: Any
+    key: str,
+    val: Any
 ) -> None:
     """Delete the row from `table` matched by the identifier key-value pair.
 
     Args:
         conn: An open connection to an sqlite3 database
         table: The name of a table in the database
-        identifier_key: The column that `identifier_val` belongs to
-        identifier_val: The value matched to a row in `table`
+        key: The column that `val` belongs to
+        val: The value matched to a row in `table`
     """
     cur = conn.cursor()
-    cur.execute(f"DELETE FROM {table} WHERE {identifier_key} = ?", (identifier_val, ))
+    cur.execute(f"DELETE FROM {table} WHERE {key} = ?", (val, ))
     conn.commit()
 
 def db_update(
     conn: sqlite3.Connection,
     table: str,
     row: dict[str, Any],
-    identifier_key: str = 'name'
+    key: str
 ) -> None:
     """Update a specific row in `table`.
 
     Matches `row` to a row in `table` using the key-value pair of
-    `identifier_key`: `row[identifier_key]`. Replace each column
+    `key`: `row[key]`. Replace each column
     of the matched row in `table` with the corresponding column
     in `row`.
 
@@ -190,14 +190,14 @@ def db_update(
         conn: An open connection to an sqlite3 database
         table: The name of a table in the database
         row: A dict representing the new columns of a row in `table`
-        identifier_key: The column used to match `row` to a row in `table`
+        key: The column used to match `row` to a row in `table`
     """
     cur = conn.cursor()
     updatestr = ''
     for key in row.keys():
         updatestr += f"{key} = :{key}, "
     updatestr = updatestr.rstrip(", ")
-    cur.execute(f"UPDATE {table} SET {updatestr} WHERE {identifier_key} = :{identifier_key}", row)
+    cur.execute(f"UPDATE {table} SET {updatestr} WHERE {key} = :{key}", row)
     conn.commit()
 
 def xlsx_to_records(
