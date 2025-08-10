@@ -60,25 +60,19 @@ def receive_emails(
     password: str,
     mailbox: str ='INBOX',
     flag: str ='UNSEEN',
-    attachment_ext: str ='.xlsx',
-):
+) -> list[EmailMessage]:
     mail = imaplib.IMAP4_SSL(host, port, ssl_context=ssl.create_default_context())
     mail.login(recipient, password)
     mail.select(mailbox)
 
     status, data = mail.search(None, flag)
-    attachments = []
+    messages = []
 
     if status == 'OK':
         for num in data[0].split():
             status, data = mail.fetch(num, '(RFC822)')
-            msg = email.message_from_bytes(data[0][1], _class=email.message.EmailMessage)
-
-            for att in msg.iter_attachments():
-                fname = att.get_filename()
-                root, ext = os.path.splitext(fname)
-                if attachment_ext and ext == attachment_ext:
-                    attachments.append(att)
+            msg = email.message_from_bytes(data[0][1], _class=EmailMessage)
+            messages.append(msg)
 
             print('From:', msg['From'])
             print('Subject:', msg['Subject'])
@@ -89,6 +83,15 @@ def receive_emails(
     mail.close()
     mail.logout()
 
+    return messages
+
+def parse_emails(
+    conn: sqlite3.Connection,
+    table: str,
+    messages: list[EmailMessage],
+    attachment_ext: str | None =None
+) -> list[EmailMessage]:
+    attachments = []
     return attachments
 
 def save_attachment(att, path):
