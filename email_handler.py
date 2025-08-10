@@ -92,6 +92,19 @@ def parse_emails(
     attachment_ext: str | None =None
 ) -> list[EmailMessage]:
     attachments = []
+    for msg in messages:
+        sender_addr = email.utils.parseaddr(msg['From'])[1]
+        user = db_get_row(conn, table, ('email', 'admin'), identifier_key='email', identifier_val=sender_addr)
+        if not user or user['admin'] == False:
+            print('INPUT ERROR: Non-privileged user.')
+            continue
+
+        for att in msg.iter_attachments():
+            fname = att.get_filename()
+            root, ext = os.path.splitext(fname)
+            if not attachment_ext or ext == attachment_ext:
+                attachments.append(att)
+
     return attachments
 
 def save_attachment(att, path):
