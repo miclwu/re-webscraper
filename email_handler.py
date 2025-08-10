@@ -19,7 +19,7 @@ def send_email(
     password: str,
     recipients: str | list[str],
     attachments: list[tuple[str, str]] =[]
-) -> bool:
+) -> None:
     """Send email from sender to recipient with optional attachments.
 
     The list `attachments` is a list of tuples. Each tuple contains two strings,
@@ -48,16 +48,10 @@ def send_email(
             f.close()
         except Exception as e:
             print(f"email_handler.py: Exception: {e}")
-    try:
-        with smtplib.SMTP_SSL(host, port) as smtp:
-            smtp.login(sender, password)
-            smtp.send_message(msg)
-    except:
-        return False
-    
-    return True
 
-def receive_email(
+    with smtplib.SMTP_SSL(host, port) as smtp:
+        smtp.login(sender, password)
+        smtp.send_message(msg)
     host: str,
     port: str,
     recipient: str,
