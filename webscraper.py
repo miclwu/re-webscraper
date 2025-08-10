@@ -43,7 +43,7 @@ def queue_inputs(
     Errors are printed to the audit log, `log`.
 
     Args:
-        log: The name of the opened audit log to be written to
+        log: The open audit log file to write to
     Returns:
         A list of dicts, with each dict representing an input command
     """
@@ -85,7 +85,7 @@ def exec_cmd(
 
     Args:
         conn: An open connection to an sqlite3 database
-        log: The name of the opened audit log to be written to
+        log: The open audit log file to write to
         item: A dict representing an operation to be performed on the database
         table_reqs: List of requested table names
     """
