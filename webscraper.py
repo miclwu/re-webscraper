@@ -112,7 +112,7 @@ def exec_cmd(
             # Precheck to catch page changes since last check
             item_old = db_get_row(conn, FUNDS_TABLE, ('name', 'url', 'status', 'checksum', 'urls_to_check', 'access_failures'), item['name'])
             if not item_old:
-                log.write(f"COMMAND ERROR: {item['name']} does not exist for command MOD\r\n")
+                log.write(f"COMMAND ERROR: {item['name']} does not exist for command MOD\n\n")
                 return
             funds_to_check = []
             check_fund(item_old, funds_to_check, [])
