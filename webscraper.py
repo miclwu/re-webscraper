@@ -47,6 +47,7 @@ def queue_inputs(
         A list of dicts, with each dict representing an input command
     """
     if not os.path.isdir(INFILE_DIR):
+        log.write('INPUT FILE ERROR: Unable to locate input directory\n\n')
         print(f"Input directory not found. Unable to locate inputs.")
 
     inputs = []
@@ -54,15 +55,16 @@ def queue_inputs(
     while True:
         infile = f"{INFILE_DIR}/{INFILE_TEMPLATE.replace('X', str(i))}"
         if not os.path.isfile(infile):
+            log.write(f"Input files: {i - 1}\n\n")
             print(f"Input files: {i - 1}")
             break
         try:
             inputs.extend(xlsx_to_records(infile, usecols=INPUT_COLS))
         except ValueError as e:
-            log.write('INPUT FILE ERROR: Incomplete set of column headers, requires: (command, name, url, status)\r\n')
+            log.write('INPUT FILE ERROR: Incomplete set of column headers, requires: (command, name, url, status)\n\n')
             print(f"webscraper.py: queue_inputs(): Invalid column headers")
         except Exception as e:
-            log.write('INPUT FILE ERROR: Unable to parse file\r\n')
+            log.write('INPUT FILE ERROR: Unable to parse file\n\n')
             print(f"webscraper.py: queue_inputs(): Exception: {e}")
             break
         i += 1
@@ -89,22 +91,22 @@ def exec_cmd(
     cmd = item.pop('command').upper()
 
     if cmd not in ('ADD', 'MOD', 'DEL', 'REQ'):
-        log.write(f"INPUT ERROR: Invalid command: {cmd.upper()} {item['name']}\r\n")
+        log.write(f"INPUT ERROR: Invalid command: {cmd.upper()} {item['name']}\n\n")
         return
     if not item['name']:
-        log.write(f"INPUT ERROR: Empty name for command {cmd}\r\n")
+        log.write(f"INPUT ERROR: Empty name for command {cmd}\n\n")
         return
     if not item['url'] and (cmd == 'ADD' or cmd == 'MOD'):
-        log.write(f"INPUT ERROR: Empty URL for command {cmd} {item['name']}\r\n")
+        log.write(f"INPUT ERROR: Empty URL for command {cmd} {item['name']}\n\n")
         return
     if item['status'] not in STATUSES and (cmd == 'ADD' and cmd == 'MOD'):
-        log.write(f"INPUT ERROR: Invalid status: \"{item['status']}\" for command: {cmd} {item['name']}\r\n")
+        log.write(f"INPUT ERROR: Invalid status: \"{item['status']}\" for command: {cmd} {item['name']}\n\n")
         return
     
     try:
         if cmd == 'ADD':
             db_insert(conn, FUNDS_TABLE, item)
-            log.write(f"ADD: {item['name']}\r\n")
+            log.write(f"ADD: {item['name']}\n\n")
 
         elif cmd == 'MOD':
             # Precheck to catch page changes since last check
@@ -122,22 +124,22 @@ def exec_cmd(
             item['urls_to_check'] = None
             item['access_failures'] = 0
             db_update(conn, FUNDS_TABLE, item)
-            log.write(f"MOD: {item['name']}, {item['url']}, {item['status']}\r\n")
+            log.write(f"MOD: {item['name']}, {item['url']}, {item['status']}\n\n")
 
         elif cmd == 'DEL':
             db_delete(conn, FUNDS_TABLE, 'name', item['name'])
-            log.write(f"DEL: {item['name']}\r\n")
+            log.write(f"DEL: {item['name']}\n\n")
         
         else:   # cmd == 'REQ'
             table_name = item['name'].lower()
             db_validate_table(conn, table_name)
             table_reqs.append(table_name)
-            log.write(f"REQ: Table \"{table_name}\"\r\n")
+            log.write(f"REQ: Table \"{table_name}\"\n\n")
 
     except sqlite3.IntegrityError as e:
-        log.write(f"INTEGRITY ERROR: {cmd} {item['name']}: {e}\r\n")
+        log.write(f"INTEGRITY ERROR: {cmd} {item['name']}: {e}\n\n")
     except InvalidInputError as e:
-        log.write(f"INPUT ERROR: {cmd} {item['name']}: {e}\r\n")
+        log.write(f"INPUT ERROR: {cmd} {item['name']}: {e}\n\n")
     except Exception as e:
         print(f"Encountered exception: {e}")
 
@@ -283,14 +285,9 @@ def main():
     if funds_to_update:
         records_update_dbtable(conn, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'], funds_to_update)
     
-    with pd.ExcelWriter(OUTFILE_PATH, engine='openpyxl') as writer:
-        if funds_to_check:
-            records_to_xlsx(funds_to_check, writer, OUTPUT_COLS, sheet_name='Funds to Check')
-        for req in table_reqs:
-            if req == FUNDS_TABLE:
-                records_to_xlsx(funds, writer, sheet_name=f"Table {FUNDS_TABLE}")
-            else:
-                records_to_xlsx(dbtable_to_records(conn, req), writer, sheet_name=f"Table {req}")
+    log.write(f"Updated funds: {len(funds_to_update)}/{len(funds)}\n\n")
+    log.write(f"Funds to check: {len(funds_to_check)}/{len(funds)}\n\n")
+
 
     conn.close()
 
