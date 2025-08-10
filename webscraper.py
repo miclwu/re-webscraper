@@ -264,17 +264,24 @@ def check_fund(
 # Check each fund in database
 # Update database
 # Write funds that need to be checked to output file
-def main():
-    auditlog = open(AUDITLOG_PATH, 'w')
-    inputs = queue_inputs(auditlog)
+def main(
+    conn: sqlite3.Connection,
+    log: TextIOWrapper
+) -> None:
+    """Execute inputs, scrape urls, update database, and generate output files.
 
-    conn = sqlite3.connect(DATABASE)
+    Compare html from each scraped url with saved data in database. Update and mark
+    database entries when changes in html occur.
+
+    Args:
+        conn: An open connection to an sqlite3 database
+        log: The open audit log file to write to
+    """
+    inputs = queue_inputs(log)
 
     table_reqs = set()
     for item in inputs:
-        exec_cmd(conn, auditlog, item, table_reqs)
-
-    auditlog.close()
+        exec_cmd(conn, log, item, table_reqs)
 
     funds = dbtable_to_records(conn, FUNDS_TABLE)
     funds_to_check = []
@@ -303,4 +310,8 @@ def main():
                     records_to_xlsx(dbtable_to_records(conn, req), writer, sheet_name=f"Table {req}")
 
 if __name__ == '__main__':
-    main()
+    conn = sqlite3.connect(DATABASE)
+    auditlog = open(AUDITLOG_PATH, 'w')
+    main(conn, auditlog)
+    auditlog.close()
+    conn.close()
