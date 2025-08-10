@@ -1,6 +1,7 @@
 import sqlite3
+import os
 from utilities import csv_to_records
-from constants import DATABASE, EMAIL_ADDRESS
+from constants import DATABASE, EMAIL_ADDRESS, INFILE_DIR, OUTFILE_DIR
 from typing import Any
 
 def init_table_funds(
@@ -75,8 +76,18 @@ def add_funds(
     cur.executemany("INSERT INTO funds (name, url, status, checksum) VALUES (:name, :url, :status, :checksum)", records)
     conn.commit()
 
+def init_dir(path):
+    try:
+        os.mkdir(path)
+    except FileExistsError as e:
+        print(f"setup.py: init_dir(): {e}")
+    except Exception as e:
+        print(f"setup.py: init_dir(): {e}")
+
 if __name__ == '__main__':
     conn = sqlite3.connect(DATABASE)
+    init_dir(INFILE_DIR)
+    init_dir(OUTFILE_DIR)
     init_table_users(conn)
     add_user(conn, EMAIL_ADDRESS, True)
     conn.close()
