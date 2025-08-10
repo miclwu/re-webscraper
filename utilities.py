@@ -233,6 +233,7 @@ def records_to_xlsx(
         records: A list of dicts, each dict representing a row in a table
         out: File path (.xlsx) or existing ExcelWriter to write to
         usecols: The list of columns to be included in `outfile`
+        sheet_name: The name of the sheet to write to
     """
     df = pd.DataFrame.from_records(records)
     df.to_excel(out, columns=usecols, sheet_name=sheet_name, index=False)
