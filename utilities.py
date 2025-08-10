@@ -202,17 +202,22 @@ def db_update(
 
 def xlsx_to_records(
     infile: str,
-    usecols: list | tuple | set | None =None
+    usecols: list | tuple | set | None =None,
+    sheet: int | str  =0
 ) -> list[dict[str, Any]]:
     """Convert the contents of a .xlsx file to records (list of dicts).
+
+    To include all columns, set `usecols` to `None` or do not specify `usecols`.
+    Not specifiying `sheet` will default to parse first sheet.
 
     Args:
         infile: The name of the .xlsx file to be parsed
         usecols: The list of columns to be included in the output `records`
+        sheet: The name or index of the sheet to parse
     Returns:
         records: A list of dicts, each dict representing a row of `infile`
     """
-    df = pd.read_excel(infile, usecols=usecols)
+    df = pd.read_excel(infile, usecols=usecols, sheet_name=sheet)
     df.replace(np.nan, None, inplace=True)
     return df.to_dict(orient='records')
 
