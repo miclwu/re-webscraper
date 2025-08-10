@@ -109,7 +109,7 @@ def parse_emails(
 
 def save_attachment(att, path):
     if os.path.isfile(path):
-        raise FileExistsError
+        raise FileExistsError(f"File already exists at \"{path}\"")
     
     with open(path, 'wb') as f:
         f.write(att.get_payload(decode=True))
