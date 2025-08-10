@@ -2,6 +2,7 @@ import csv
 import pandas as pd
 import numpy as np
 import sqlite3
+import os
 from typing import *
 
 class InvalidInputError(ValueError):
@@ -277,3 +278,15 @@ def csv_clear_field(infile, outfile, usecols, field):
     for item in records:
         item[field] = None
     records_to_csv(records, outfile, usecols=usecols)
+
+def clean_dir(
+    path: str
+) -> None:
+    """Remove all files in directory pointed to by `path`.
+
+    Args:
+        path: The path to the directory to be cleaned
+    """
+    files = [f"{path}/{f}" for f in os.listdir(path) if os.path.isfile(f"{path}/{f}")]
+    for fpath in files:
+        os.remove(fpath)
