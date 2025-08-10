@@ -74,7 +74,7 @@ def exec_cmd(
     conn: sqlite3.Connection,
     log: str,
     item: dict[str, Any],
-    table_reqs: list[str]
+    table_reqs: set[str]
 ) -> None:
     """Execute the command, represented by the dict `item`, on the database.
 
@@ -133,7 +133,7 @@ def exec_cmd(
         else:   # cmd == 'REQ'
             table_name = item['name'].lower()
             db_validate_table(conn, table_name)
-            table_reqs.append(table_name)
+            table_reqs.add(table_name)
             log.write(f"REQ: Table \"{table_name}\"\n\n")
 
     except sqlite3.IntegrityError as e:
@@ -269,7 +269,7 @@ def main():
 
     conn = sqlite3.connect(DATABASE)
 
-    table_reqs = []
+    table_reqs = set()
     for item in inputs:
         exec_cmd(conn, auditlog, item, table_reqs)
 
