@@ -285,11 +285,21 @@ def main():
     if funds_to_update:
         records_update_dbtable(conn, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'], funds_to_update)
     
+    if funds_to_check:
+        records_to_xlsx(funds_to_check, OUTFILE_USER_PATH, OUTPUT_COLS, sheet_name='Funds to Check')
+
     log.write(f"Updated funds: {len(funds_to_update)}/{len(funds)}\n\n")
     log.write(f"Funds to check: {len(funds_to_check)}/{len(funds)}\n\n")
 
-
-    conn.close()
+    if table_reqs:
+        with pd.ExcelWriter(OUTFILE_ADMIN_PATH, engine='openpyxl') as writer:
+            if funds_to_check:
+                records_to_xlsx(funds_to_check, writer, OUTPUT_COLS, sheet_name='Funds to Check')
+            for req in table_reqs:
+                if req == FUNDS_TABLE:
+                    records_to_xlsx(funds, writer, sheet_name=f"Table {FUNDS_TABLE}")
+                else:
+                    records_to_xlsx(dbtable_to_records(conn, req), writer, sheet_name=f"Table {req}")
 
 if __name__ == '__main__':
     main()
