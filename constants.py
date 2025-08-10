@@ -4,15 +4,21 @@ import os
 
 DATABASE = 'test.db'
 FUNDS_TABLE = 'funds'
+USERS_TABLE = 'users'
 
-INFILE_DIR = 'inputs_TEST'
-INFILE_TEMPLATE  = 'input_X.csv'
+FILE_EXT = '.xlsx'
 
-OUTFILE_PATH = 'outputs/checkfunds.xlsx'
-OUTFILE_NAME = 'checkfunds.xlsx'
+INFILE_DIR = 'inputs'
+INFILE_TEMPLATE  = 'input_X.xlsx'
+
+OUTFILE_DIR = 'outputs'
+OUTFILE_ADMIN_PATH = 'outputs/scraper_funds_admin.xlsx'
+OUTFILE_USER_PATH = 'outputs/scraper_funds_user.xlsx'
+OUTFILE_NAME = 'scraper_funds.xlsx'
 AUDITLOG_PATH = 'outputs/auditlog.txt'
 AUDITLOG_NAME = 'auditlog.txt'
 
+DB_FUNDS_COLS = ('name', 'url', 'status', 'urls_to_check', 'checksum', 'access_failures')
 INPUT_COLS = ('command', 'name', 'url', 'status')
 OUTPUT_COLS = ('name', 'url', 'status', 'urls_to_check')
 
@@ -38,3 +44,5 @@ SMTP_HOST = 'smtp.gmail.com'
 SMTP_PORT = 465
 IMAP_HOST = 'imap.gmail.com'
 IMAP_PORT = 993
+
+EMAIL_SEND_SUBJECT = 'RE Webscraper'
