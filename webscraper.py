@@ -81,7 +81,7 @@ def exec_cmd(
     """
     cmd = item.pop('command').upper()
 
-    if cmd not in ('ADD', 'MOD', 'DEL', 'REQ'):
+    if cmd not in ('ADD', 'MOD', 'DEL', 'REQ', 'ADDU', 'DELU'):
         log.write(f"INPUT ERROR: Invalid command: {cmd.upper()} {item['name']}\n\n")
         return
     if not item['name']:
@@ -90,7 +90,10 @@ def exec_cmd(
     if not item['url'] and (cmd == 'ADD' or cmd == 'MOD'):
         log.write(f"INPUT ERROR: Empty URL for command {cmd} {item['name']}\n\n")
         return
-    if item['status'] not in STATUSES and (cmd == 'ADD' or cmd == 'MOD'):
+    if (
+        (cmd in ('ADD', 'MOD') and item['status'] not in STATUSES) or 
+        (cmd == 'ADDU' and item['status'] not in (True, False, 1, 0))
+    ):
         log.write(f"INPUT ERROR: Invalid status: \"{item['status']}\" for command: {cmd} {item['name']}\n\n")
         return
     
@@ -126,6 +129,14 @@ def exec_cmd(
             db_validate_table(conn, table_name)
             table_reqs.add(table_name)
             log.write(f"REQ: Table \"{table_name}\"\n\n")
+        
+        elif cmd == 'ADDU':
+            db_insert(conn, USERS_TABLE, {'email': item['name'], 'admin': item['status']})
+            log.write(f"ADDU: {item['name']}, admin: {item['status']}\n\n")
+
+        else:   # cmd == 'DELU'
+            db_delete(conn, USERS_TABLE, key='email', val=item['name'])
+            log.write(f"DELU: {item['name']}\n\n")
 
     except sqlite3.IntegrityError as e:
         log.write(f"INTEGRITY ERROR: {cmd} {item['name']}: {e}\n\n")
