@@ -124,7 +124,7 @@ def exec_cmd(
             db_delete(conn, FUNDS_TABLE, key='name', val=item['name'])
             log.write(f"DEL: {item['name']}\n\n")
         
-        else:   # cmd == 'REQ'
+        elif cmd == 'REQ':
             table_name = item['name'].lower()
             db_validate_table(conn, table_name)
             table_reqs.add(table_name)
