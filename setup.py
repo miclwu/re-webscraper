@@ -60,7 +60,7 @@ def add_user(
     """
     cur = conn.cursor()
     cur.execute('INSERT INTO users (email, admin) VALUES (?, ?)', (email, admin))
-    cur.commit()
+    conn.commit()
 
 def add_funds(
     conn: sqlite3.Connection,
