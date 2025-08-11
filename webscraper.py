@@ -90,7 +90,7 @@ def exec_cmd(
     if not item['url'] and (cmd == 'ADD' or cmd == 'MOD'):
         log.write(f"INPUT ERROR: Empty URL for command {cmd} {item['name']}\n\n")
         return
-    if item['status'] not in STATUSES and (cmd == 'ADD' and cmd == 'MOD'):
+    if item['status'] not in STATUSES and (cmd == 'ADD' or cmd == 'MOD'):
         log.write(f"INPUT ERROR: Invalid status: \"{item['status']}\" for command: {cmd} {item['name']}\n\n")
         return
     
