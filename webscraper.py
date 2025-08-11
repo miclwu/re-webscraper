@@ -121,7 +121,7 @@ def exec_cmd(
             log.write(f"MOD: {item['name']}, {item['url']}, {item['status']}\n\n")
 
         elif cmd == 'DEL':
-            db_delete(conn, FUNDS_TABLE, 'name', key='name', val=item['name'])
+            db_delete(conn, FUNDS_TABLE, key='name', val=item['name'])
             log.write(f"DEL: {item['name']}\n\n")
         
         else:   # cmd == 'REQ'
