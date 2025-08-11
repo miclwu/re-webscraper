@@ -248,12 +248,6 @@ def check_fund(
     if fund['status'] == CHECK:
         funds_to_check.append(fund)
 
-# Main loop:
-# Queue input commands
-# Execute input commands
-# Check each fund in database
-# Update database
-# Write funds that need to be checked to output file
 def main(
     conn: sqlite3.Connection,
     log: TextIOWrapper
