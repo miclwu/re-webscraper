@@ -88,6 +88,7 @@ if __name__ == '__main__':
     conn = sqlite3.connect(DATABASE)
     init_dir(INFILE_DIR)
     init_dir(OUTFILE_DIR)
+    init_table_funds(conn)
     init_table_users(conn)
     add_user(conn, EMAIL_ADDRESS, True)
     conn.close()
