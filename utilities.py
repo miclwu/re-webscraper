@@ -194,9 +194,9 @@ def db_update(
     """
     cur = conn.cursor()
     updatestr = ''
-    for key in row.keys():
-        updatestr += f"{key} = :{key}, "
-    updatestr = updatestr.rstrip(", ")
+    for k in row.keys():
+        updatestr += f"{k} = :{k}, "
+    updatestr = updatestr.rstrip(', ')
     cur.execute(f"UPDATE {table} SET {updatestr} WHERE {key} = :{key}", row)
     conn.commit()
 
