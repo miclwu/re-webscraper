@@ -94,7 +94,7 @@ def parse_emails(
     attachments = []
     for msg in messages:
         sender_addr = email.utils.parseaddr(msg['From'])[1]
-        user = db_get_row(conn, table, ('email', 'admin'), identifier_key='email', identifier_val=sender_addr)
+        user = db_get_row(conn, table, ('email', 'admin'), key='email', val=sender_addr)
         if not user or user['admin'] == False:
             print('INPUT ERROR: Non-privileged user.')
             continue
