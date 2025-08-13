@@ -57,34 +57,34 @@ Access command:
 
 ## File Overview
 
-### `main.py`
+### main.py
 
 The main file. Handles audit logging for email input. Handles email input/output using functions from `email_handler.py`. Calls `main()` from `webscraper.py` to handle web scraping and database management.
 
 Dependencies: `webscraper.py`, `email_handler.py`, `utilities.py`, `constants.py`
 
-### `webscraper.py`
+### webscraper.py
 
 Web scraping, parsing user input, database management, and audit logging. Takes in user inputs in the form of .xlsx files from `INFILE_DIR` and outputs funds that need to be checked or requested data to `OUTFILE_DIR`.
 
 Main Function Args: sqlite3 connection, audit log file  
 Dependencies: `utilities.py`, `constants.py`
 
-### `email_handler.py`
+### email_handler.py
 
 Contains functions for sending emails, receiving emails, and parsing emails (to authenticate emails and download attachments).
 
 Dependencies: `utilities.py`, `constants.py`
 
-### `utilities.py`
+### utilities.py
 
 Miscellaneous helper functions for database management, converting .xlsx files to records objects (a list of dicts), and file/directory management.
 
-### `constants.py` 
+### constants.py
 
 Contains constant, global variables for the webscraper.
 
-### `setup.py`
+### setup.py
 
 Initializes sqlite3 database and tables `FUNDS_TABLE` and `USERS_TABLE`. Initializes `INFILE_DIR` and `OUTFILE_DIR`.
 
@@ -129,7 +129,7 @@ Dependencies: `utilities.py`, `constants.py`
 - `IMAP_PORT`: The port number for IMAP
 - `EMAIL_SEND_SUBJECT`: The subject used when sending emails to users
 
-## Database information
+## Database Information
 
 The webscraper uses an sqlite3 database, called `DATABASE`.
 
