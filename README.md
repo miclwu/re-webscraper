@@ -13,7 +13,7 @@
 
 ## Using the Webscraper
 
-The webscraper is interfaced with via emails. All users (registered with the webscraper) will receive output from the webscraper. All privileged/admin users will be able to send commands to the webscraper via input files (.xlsx), and will be able to receive privileged data such as audit logs and full database tables.
+The webscraper is interfaced with via emails. All users (that are registered with the webscraper) will receive output from the webscraper. All privileged/admin users will be able to send commands to the webscraper via input files (.xlsx), and will be able to receive privileged data such as audit logs and full database tables. Users without admin privilege are **not** able to send commands to the webscraper.
 
 ### Command Structure
 
