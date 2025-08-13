@@ -1,10 +1,31 @@
 # re-webscraper
 
+## Webscraper Command Cheatsheet
+
+| command 	| name           	| url                                                    	| status             	|
+|---------	|----------------	|--------------------------------------------------------	|--------------------	|
+| ADD     	| Fund name      	| URL 1<br><br>URL 1;;URL 2;; ... ;;URL N                	| Open<br><br>Closed 	|
+| MOD     	| Fund name      	| URL 1<br><br>URL 1;;URL 2;; ... ;;URL N<br><br>_EMPTY_ 	| Open<br><br>Closed 	|
+| DEL     	| Fund name      	| _EMPTY_                                                	| _EMPTY_            	|
+| REQ     	| funds<br>users 	| _EMPTY_                                                	| _EMPTY_            	|
+| ADDU    	| User email     	| _EMPTY_                                                	| True<br><br>False  	|
+| DELU    	| User email     	| _EMPTY_                                                	| _EMPTY_            	|
+
 ## Using the Webscraper
 
 The webscraper is interfaced with via emails. All users (registered with the webscraper) will receive output from the webscraper. All privileged/admin users will be able to send commands to the webscraper via input files (.xlsx), and will be able to receive privileged data such as audit logs and full database tables.
 
 ### Command Structure
+
+Commands are written in excel files (.xlsx), with each file containing 4 columns:
+1. `command`: The command to execute. See the "Valid Commands" section below. Always required.
+2. `name`: The name of the item (ie. a fund, table, or user email) targeted by the command. Always required.
+3. `url`: The url(s) of the item (ie. fund url(s)). Required by add fund (`ADD`).
+    - Multiple urls may be added in each cell of the `url` column. Separate each url using ";;" as a delimiter.
+    - e.g. https://www.google.com and https://mail.google.com --> https://www.google.com;;https://mail.google.com
+4. `status`: The status of the item (ie. fund status or user privilege). Required by add fund (`ADD`), modify fund (`MOD`), and add user (`ADDU`) commands.
+
+If a certain command does not require a column to be filled, the cell may be left blank. However, the column **must** still exist in the excel file, **even if the file only contains one command.**
 
 ### Valid Commands
 
@@ -20,7 +41,19 @@ Manipulating `USERS_TABLE`:
 Access command:
 - `REQ`: Request all data from a table in `DATABASE`. The requested table is decided by the `name` field. Requires: `name`
 
-### TODO: Add examples
+### Examples
+
+| command 	| name 	| url 	| status 	| Explanation 	|
+|---	|---	|---	|---	|---	|
+| ADD 	| Google 	| https://www.google.com 	| Open 	| Add a fund named "Google" with one URL and status "Open". 	|
+| ADD 	| Search Engines 	| https://www.google.com;;https://www.bing.com 	| Closed 	| Add a fund named "Search Engines" with two URLs and status "Closed". 	|
+| MOD 	| Google 	| _EMPTY_ 	| Closed 	| Modify a fund named "Google", setting the "status" field to "Closed" and leaving the "url" field unchanged. 	|
+| MOD 	| Search Engines 	| https://www.google.com 	| Closed 	| Modify a fund named "Search Engines", modifying "url" field and setting "status" field to "Closed". 	|
+| DEL 	| Search Engines 	| _EMPTY_ 	| _EMPTY_ 	| Delete a fund named "Google". 	|
+| REQ 	| funds 	| _EMPTY_ 	| _EMPTY_ 	| Request the table named "funds" from the database. 	|
+| ADDU 	| user@example1.test 	| _EMPTY_ 	| True 	| Add a user with admin privileges. 	|
+| ADDU 	| user@example2.test 	| _EMPTY_ 	| False 	| Add a user with normal privileges. 	|
+| DELU 	| user@example2.test 	| _EMPTY_ 	| _EMPTY_ 	| Delete a user with the matching email. 	|
 
 ## File Overview
 
@@ -77,7 +110,7 @@ Access command:
 
 ## Database information
 
-`webscraper.py` uses an sqlite3 database, called `DATABASE`.
+The webscraper uses an sqlite3 database, called `DATABASE`.
 
 `DATABASE` has 2 tables, `FUNDS_TABLE` and `USERS_TABLE`.
 
