@@ -29,12 +29,12 @@ If a certain command does not require a column to be filled, the cell may be lef
 
 ### Valid Commands
 
-Manipulating `FUNDS_TABLE`:
+Manipulating `FUNDS_TABLE` (ie. "funds"):
 - `ADD`: Add a fund to `FUNDS_TABLE`. Requires: `name`, `url`, and `status`
 - `MOD`: Modify an existing fund in `FUNDS_TABLE`. Replaces fund url or status with `url`/`status`. The fund name CANNOT be modified, since it is used to identify which existing fund should be modified. Requires: `name` and `status`
 - `DEL`: Delete an existing fund from `FUNDS_TABLE`. Requires: `name`
 
-Manipulating `USERS_TABLE`:
+Manipulating `USERS_TABLE` (ie. "users"):
 - `ADDU`: Add a user to `USERS_TABLE`. The user email is set by the `name` field, while the user privilege / admin status is set by `status`. Requires: `name` and `status`
 - `DELU`: Delete an existing user from `USERS_TABLE`. Requires: `name`
 
