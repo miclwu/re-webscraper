@@ -40,14 +40,16 @@ def main() -> None:
     auditlog.write('-----\nEND WEB SCRAPER\n\n\n')
     auditlog.close()
 
-    outfile_admin_exists = os.path.isfile(OUTFILE_ADMIN_PATH)
-    outfile_user_exists = os.path.isfile(OUTFILE_USER_PATH)
-
     recipients = util.dbtable_to_records(conn, USERS_TABLE)
     conn.close()
 
     recipients_admin = set(admin['email'] for admin in recipients if admin['admin'] == True)
     recipients_users = set(user['email'] for user in recipients if user['admin'] == False)
+
+    outfile_admin_exists = os.path.isfile(OUTFILE_ADMIN_PATH)
+    outfile_user_exists = os.path.isfile(OUTFILE_USER_PATH)
+
+    # Prepare and send email to admin users
 
     attachments = [(AUDITLOG_PATH, AUDITLOG_NAME)]
     body_msg = 'No funds to check today.'
@@ -69,6 +71,8 @@ def main() -> None:
             )
         except Exception as e:
             print(f"Failed to send email to admin users. Exception: {e}")
+
+    # Prepare and send email to normal users
 
     attachments = []
     body_msg = 'No funds to check today.'
