@@ -109,7 +109,7 @@ def exec_cmd(
                 log.write(f"INPUT ERROR: {item['name']} does not exist for command MOD\n\n")
                 return
             funds_to_check = []
-            check_fund(item_old, funds_to_check, [])
+            check_fund(None, item_old, funds_to_check, [])
             if funds_to_check:
                 log.write(f"WARNING: Potential change to fund \"{item['name']}\" before MOD command\n")
 
