@@ -193,6 +193,7 @@ def get_soup(
     return None
 
 def check_fund(
+    log: TextIOWrapper | None,
     fund: dict[str, Any],
     funds_to_check: list[dict[str, Any]],
     funds_to_update: list[dict[str, Any]]
@@ -204,6 +205,7 @@ def check_fund(
     version of `fund` in the database.
 
     Args:
+        log: The open audit log file to write to, or None to suppress logging
         fund: A dict representing a fund's info / a row in the database
         funds_to_check: A list of funds that need to be checked
         funds_to_update: A list of funds that need to be updated
@@ -229,6 +231,10 @@ def check_fund(
                 urls_to_check.add(urls[i])
             
             checksums.append(old_checksums[i])
+
+            if log:
+                log.write(f"SCRAPE FAIL: {fund['name']}, {urls[i]}\n\n")
+
             print(f"{fund['name']}, {fund['status'].upper()} FUND: URL {i+1}: Failed to connect.")
         else:
             # Successful url scrape
@@ -241,6 +247,10 @@ def check_fund(
             elif checksums[i] != old_checksums[i]:
                 need_update = True
                 urls_to_check.add(urls[i])
+
+                if log:
+                    log.write(f"CHECK: {fund['name']}, {urls[i]}\n\n")
+                
                 print(f"{fund['name']}, {fund['status'].upper()} FUND: URL {i+1}: Updating checksum. Check required.")
             else:
                 print(f"{fund['name']}, {fund['status'].upper()} FUND: URL {i+1}: Checksums match.")
@@ -283,7 +293,7 @@ def main(
     funds_to_update = []
 
     for item in funds:
-        check_fund(item, funds_to_check, funds_to_update)
+        check_fund(log, item, funds_to_check, funds_to_update)
     
     if funds_to_update:
         try:
