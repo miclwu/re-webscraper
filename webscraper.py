@@ -6,9 +6,7 @@ import hashlib
 import os
 import time
 from requests.exceptions import HTTPError, Timeout
-from utilities import xlsx_to_records, records_to_xlsx, dbtable_to_records, records_update_dbtable
-from utilities import db_validate_table, db_insert, db_update, db_delete, db_get_row
-from utilities import InvalidInputError
+import utilities as util
 from typing import Any
 from io import TextIOWrapper
 from constants import *
@@ -50,7 +48,7 @@ def queue_inputs(
             print(f"Input files: {i - 1}")
             break
         try:
-            inputs.extend(xlsx_to_records(infile, usecols=INPUT_COLS))
+            inputs.extend(util.xlsx_to_records(infile, usecols=INPUT_COLS))
         except ValueError as e:
             log.write('INPUT FILE ERROR: Incomplete set of column headers, requires: (command, name, url, status)\n\n')
             print(f"webscraper.py: queue_inputs(): Invalid column headers")
@@ -99,12 +97,12 @@ def exec_cmd(
     
     try:
         if cmd == 'ADD':
-            db_insert(conn, FUNDS_TABLE, item)
+            util.db_insert(conn, FUNDS_TABLE, item)
             log.write(f"ADD: {item['name']}\n\n")
 
         elif cmd == 'MOD':
             # Precheck to catch page changes since last check
-            item_old = db_get_row(conn, FUNDS_TABLE, DB_FUNDS_COLS, key='name', val=item['name'])
+            item_old = util.db_get_row(conn, FUNDS_TABLE, DB_FUNDS_COLS, key='name', val=item['name'])
             if not item_old:
                 log.write(f"INPUT ERROR: {item['name']} does not exist for command MOD\n\n")
                 return
@@ -122,31 +120,31 @@ def exec_cmd(
             item['checksum'] = None
             item['urls_to_check'] = None
             item['access_failures'] = 0
-            db_update(conn, FUNDS_TABLE, item, key='name')
+            util.db_update(conn, FUNDS_TABLE, item, key='name')
             log.write(f"MOD: {item['name']}, {item['url']}, {item['status']}\n\n")
 
         elif cmd == 'DEL':
-            db_delete(conn, FUNDS_TABLE, key='name', val=item['name'])
+            util.db_delete(conn, FUNDS_TABLE, key='name', val=item['name'])
             log.write(f"DEL: {item['name']}\n\n")
         
         elif cmd == 'REQ':
             table_name = item['name'].lower()
-            db_validate_table(conn, table_name)
+            util.db_validate_table(conn, table_name)
             table_reqs.add(table_name)
             log.write(f"REQ: Table \"{table_name}\"\n\n")
         
         elif cmd == 'ADDU':
-            db_insert(conn, USERS_TABLE, {'email': item['name'], 'admin': item['status']})
+            util.db_insert(conn, USERS_TABLE, {'email': item['name'], 'admin': item['status']})
             log.write(f"ADDU: {item['name']}, admin: {item['status']}\n\n")
 
         else:   # cmd == 'DELU'
-            db_delete(conn, USERS_TABLE, key='email', val=item['name'])
+            util.db_delete(conn, USERS_TABLE, key='email', val=item['name'])
             log.write(f"DELU: {item['name']}\n\n")
 
     except sqlite3.Error as e:
         conn.rollback()
         log.write(f"DATABASE ERROR: {cmd} {item['name']}: {e}\n\n")
-    except InvalidInputError as e:
+    except util.InvalidInputError as e:
         log.write(f"INPUT ERROR: {cmd} {item['name']}: {e}\n\n")
     except Exception as e:
         print(f"Encountered exception: {e}")
@@ -294,7 +292,7 @@ def main(
     for item in inputs:
         exec_cmd(conn, log, item, table_reqs)
 
-    funds = dbtable_to_records(conn, FUNDS_TABLE)
+    funds = util.dbtable_to_records(conn, FUNDS_TABLE)
     funds_to_check = []
     funds_to_update = []
 
@@ -303,7 +301,7 @@ def main(
     
     if funds_to_update:
         try:
-            records_update_dbtable(conn, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'], funds_to_update)
+            util.records_update_dbtable(conn, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'], funds_to_update)
         except sqlite3.Error as e:
             conn.rollback()
             log.write(f"DATABASE ERROR: Fatal error when updating database: {e}\n\n")
@@ -311,7 +309,7 @@ def main(
             log.write(f"ERROR: Occurred when updating database: {e}\n\n")
 
     if funds_to_check:
-        records_to_xlsx(funds_to_check, OUTFILE_USER_PATH, OUTPUT_COLS, sheet_name='Funds to Check')
+        util.records_to_xlsx(funds_to_check, OUTFILE_USER_PATH, OUTPUT_COLS, sheet_name='Funds to Check')
 
     log.write(f"INFO: Updated funds: {len(funds_to_update)}/{len(funds)}\n\n")
     log.write(f"INFO: Funds to check: {len(funds_to_check)}/{len(funds)}\n\n")
@@ -319,12 +317,12 @@ def main(
     if table_reqs:
         with pd.ExcelWriter(OUTFILE_ADMIN_PATH, engine='openpyxl') as writer:
             if funds_to_check:
-                records_to_xlsx(funds_to_check, writer, OUTPUT_COLS, sheet_name='Funds to Check')
+                util.records_to_xlsx(funds_to_check, writer, OUTPUT_COLS, sheet_name='Funds to Check')
             for req in table_reqs:
                 if req == FUNDS_TABLE:
-                    records_to_xlsx(funds, writer, sheet_name=f"Table {FUNDS_TABLE}")
+                    util.records_to_xlsx(funds, writer, sheet_name=f"Table {FUNDS_TABLE}")
                 else:
-                    records_to_xlsx(dbtable_to_records(conn, req), writer, sheet_name=f"Table {req}")
+                    util.records_to_xlsx(util.dbtable_to_records(conn, req), writer, sheet_name=f"Table {req}")
 
 if __name__ == '__main__':
     conn = sqlite3.connect(DATABASE)
