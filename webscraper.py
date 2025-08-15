@@ -114,6 +114,11 @@ def exec_cmd(
                 log.write(f"WARNING: Potential change to fund \"{item['name']}\" before MOD command\n")
 
             # Execute MOD
+            # Remove url field if not set
+            if not item['url']:
+                item.pop('url')
+
+            # Reset checksum, urls_to_check, and access_failures fields
             item['checksum'] = None
             item['urls_to_check'] = None
             item['access_failures'] = 0
