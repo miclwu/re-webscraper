@@ -143,8 +143,9 @@ def exec_cmd(
             db_delete(conn, USERS_TABLE, key='email', val=item['name'])
             log.write(f"DELU: {item['name']}\n\n")
 
-    except sqlite3.IntegrityError as e:
-        log.write(f"INTEGRITY ERROR: {cmd} {item['name']}: {e}\n\n")
+    except sqlite3.Error as e:
+        conn.rollback()
+        log.write(f"DATABASE ERROR: {cmd} {item['name']}: {e}\n\n")
     except InvalidInputError as e:
         log.write(f"INPUT ERROR: {cmd} {item['name']}: {e}\n\n")
     except Exception as e:
