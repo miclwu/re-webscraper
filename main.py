@@ -55,9 +55,12 @@ def main() -> None:
     body_msg = 'No funds to check today.'
 
     if recipients_admin:
-        if outfile_admin_exists:
+        if outfile_admin_exists and outfile_user_exists:
             attachments.insert(0, (OUTFILE_ADMIN_PATH, OUTFILE_NAME))
-            body_msg = 'Funds to check (or table request) attached.'
+            body_msg = 'Funds to check and table request(s) attached.'
+        elif outfile_admin_exists:
+            attachments.insert(0, (OUTFILE_ADMIN_PATH, OUTFILE_NAME))
+            body_msg = 'Table request(s) attached. No funds to check today.'
         elif outfile_user_exists:
             attachments.insert(0, (OUTFILE_USER_PATH, OUTFILE_NAME))
             body_msg = 'Funds to check attached.'
