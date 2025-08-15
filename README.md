@@ -8,7 +8,7 @@
 | MOD     	| Fund name      	| URL 1<br><br>URL 1;;URL 2;; ... ;;URL N<br><br>_EMPTY_ 	| Open<br><br>Closed 	|
 | DEL     	| Fund name      	| _EMPTY_                                                	| _EMPTY_            	|
 | REQ     	| funds<br>users 	| _EMPTY_                                                	| _EMPTY_            	|
-| ADDU    	| User email     	| _EMPTY_                                                	| True<br><br>False  	|
+| ADDU    	| User email     	| _EMPTY_                                                	| True, 1<br><br>False, 0  	|
 | DELU    	| User email     	| _EMPTY_                                                	| _EMPTY_            	|
 
 ## Using the Webscraper
@@ -31,7 +31,7 @@ If a certain command does not require a column to be filled, the cell may be lef
 
 Manipulating `FUNDS_TABLE` (ie. "funds"):
 - `ADD`: Add a fund to `FUNDS_TABLE`. Requires: `name`, `url`, and `status`
-- `MOD`: Modify an existing fund in `FUNDS_TABLE`. Replaces fund url or status with `url`/`status`. The fund name CANNOT be modified, since it is used to identify which existing fund should be modified. Requires: `name` and `status`
+- `MOD`: Modify an existing fund in `FUNDS_TABLE`. Replaces fund url or status with `url`/`status`. The fund name CANNOT be modified, since it is used to identify which existing fund should be modified. Page history is deleted. Requires: `name` and `status`
 - `DEL`: Delete an existing fund from `FUNDS_TABLE`. Requires: `name`
 
 Manipulating `USERS_TABLE` (ie. "users"):
@@ -39,9 +39,9 @@ Manipulating `USERS_TABLE` (ie. "users"):
 - `DELU`: Delete an existing user from `USERS_TABLE`. Requires: `name`
 
 Access command:
-- `REQ`: Request all data from a table in `DATABASE`. The requested table is decided by the `name` field. Requires: `name`
+- `REQ`: Request all data from a table in `DATABASE`. The requested table is decided by the `name` field. Fetches the most up to date version of the requested table (ie. commands after `REQ` in the input file(s) will be executed **before** the requested table is sent). Requires: `name`
 
-### Examples
+### Command Examples
 
 | command 	| name 	| url 	| status 	| Explanation 	|
 |---	|---	|---	|---	|---	|
