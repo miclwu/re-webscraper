@@ -13,7 +13,7 @@ def db_validate_table(
     conn: sqlite3.Connection,
     table: str
 ) -> None:
-    """Check if `table` is in the database opened via `conn` and raise `InvalidInputError` if not.
+    """Check if `table` is in the database opened via `conn`.
 
     Args:
         conn: An open connection to an sqlite3 database
