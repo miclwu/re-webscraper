@@ -55,6 +55,104 @@ Access command:
 | ADDU 	| user@example2.test 	| _EMPTY_ 	| False 	| Add a user with normal privileges. 	|
 | DELU 	| user@example2.test 	| _EMPTY_ 	| _EMPTY_ 	| Delete a user with the matching email. 	|
 
+### Understanding the Audit Log
+
+| Message Header 	| Explanation 	|
+|---	|---	|
+| ADD, MOD, DEL, etc. 	| Successful execution of the corresponding command. 	|
+| INPUT FILE ERROR 	| Input file(s) could not be located or parsed. 	|
+| INPUT ERROR 	| A command was formatted incorrectly or could not be executed. 	|
+| DATABASE ERROR 	| An error occurred while attempting to execute a database operation. 	|
+| EMAIL HANDLER 	| Message from the email handler. 	|
+| EMAIL HANDLER ERROR 	| An error occurred with the email handler. 	|
+| INFO 	| An informational message. 	|
+| ERROR 	| A general error message. Check message body to see why the error occurred. 	|
+| WARNING 	| Appears right above an ADD, MOD, etc. message in the audit log. Indicates that the command below the warning was valid and was executed but there are potential issues that may result from the execution of the command. 	|
+
+### Audit Log Examples
+
+#### Example 1: Valid command execution
+
+Initial state: empty database
+Say the following commands are executed in the following order, and were sent to the webscraper in a single .xlsx file:
+
+    cmd     name        url             status
+
+    ADD     Fund 1      URL 1           Open
+    MOD     Fund 1      URL 1;;URL 2    Closed
+    ADD     Fund 2      URL 3           Closed
+    DEL     Fund 2
+    REQ     funds
+
+The audit log would contain the following messages (assuming no page changes were detected):
+
+    INFO: Input files: 1
+    ADD: Fund 1
+    MOD: Fund 1, URL 1;;URL 2, Closed
+    ADD: Fund 2
+    DEL: Fund 2
+    REQ: Table "funds"
+    INFO: Updated funds: 1/1
+    INFO: Funds to check: 0/1
+
+#### Example 2: Database Error
+
+Say "Fund 1" already exists in the database, and the following command is executed:
+
+    cmd     name       url       status
+
+    ADD     Fund 1     URL 1     Open        
+
+The following message would be printed in the audit log:
+
+    DATABASE ERROR: ADD Fund 1: UNIQUE constraint failed: funds.name
+
+Most "DATABASE ERROR" messages will occur because of a UNIQUE constraint. If you are getting an error message similar to this, either remove the offending item from the database before adding it, or use the `MOD` command.
+
+#### Example 3: Input Error
+
+Attempting to execute the following commands:
+
+    cmd     name        url         status
+    
+    ADD     Fund 1                  Open
+    ADD     Fund 2      URL 1
+    ADD     Fund 3      URL 1       Wrong
+    ADD                 URL 1       Open
+            Fund 5      URL 1       Open
+    DNE     Fund 6      URL 1       Open
+    REQ     not_in_db
+    
+Results in the following messages in the audit log:
+
+    INPUT ERROR: ADD Fund 1: Empty URL
+    INPUT ERROR: ADD Fund 2: Invalid status: ""
+    INPUT ERROR: ADD Fund 3: Invalid status: "Wrong"
+    INPUT ERROR: ADD: Empty name
+    INPUT ERROR: Invalid command: " Fund 5"
+    INPUT ERROR: Invalid command: "DNE Fund 6"
+    INPUT ERROR: REQ not_in_db: Table not found
+
+Note that commands are checked from left to right in the sequence: command, name, url, status
+For commands with multiple errors, only the first error is caught:
+
+    cmd     name        url     status
+
+    ADD     Fund 1
+
+Resulting audit log message:
+
+    INPUT ERROR: ADD Fund 1: Empty URL
+
+#### Example 4: MOD Warning
+
+Currently warnings are only issued under specific circumstances with the `MOD` command.
+
+Say that there is an "Open" fund named "Fund 1" in the database. The webscraper detects a page change. A user checks the fund, sees it is now "Closed", and inputs a `MOD` command to edit "Fund 1". Before executing the `MOD` command, the webscraper checks "Fund 1" and detects another page change. It is possible that "Fund 1" is now "Open", but the `MOD` command will change "Fund 1" to "Closed". Thus, the webscraper writes a warning message to the audit log:
+
+    WARNING: Potential change to fund "Fund 1" before MOD command
+    MOD: Fund 1, URL 1, Closed
+
 ## File Overview
 
 ### main.py
