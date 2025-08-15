@@ -46,7 +46,7 @@ def queue_inputs(
     while True:
         infile = f"{INFILE_DIR}/{INFILE_TEMPLATE.replace('X', str(i))}"
         if not os.path.isfile(infile):
-            log.write(f"Input files: {i - 1}\n\n")
+            log.write(f"INFO: Input files: {i - 1}\n\n")
             print(f"Input files: {i - 1}")
             break
         try:
@@ -291,8 +291,8 @@ def main(
     if funds_to_check:
         records_to_xlsx(funds_to_check, OUTFILE_USER_PATH, OUTPUT_COLS, sheet_name='Funds to Check')
 
-    log.write(f"Updated funds: {len(funds_to_update)}/{len(funds)}\n\n")
-    log.write(f"Funds to check: {len(funds_to_check)}/{len(funds)}\n\n")
+    log.write(f"INFO: Updated funds: {len(funds_to_update)}/{len(funds)}\n\n")
+    log.write(f"INFO: Funds to check: {len(funds_to_check)}/{len(funds)}\n\n")
 
     if table_reqs:
         with pd.ExcelWriter(OUTFILE_ADMIN_PATH, engine='openpyxl') as writer:
