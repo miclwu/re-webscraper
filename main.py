@@ -17,12 +17,12 @@ def main() -> None:
     conn = sqlite3.connect(DATABASE)
 
     auditlog = open(AUDITLOG_PATH, 'w')
-    auditlog.write('BEGIN EMAIL RECEIVER\n-----\n\n')
+    auditlog.write('BEGIN EMAIL HANDLER\n-----\n\n')
     messages = mail.receive_emails(IMAP_HOST, IMAP_PORT, EMAIL_ADDRESS, EMAIL_PASSWORD)
     attachments = mail.parse_emails(conn, USERS_TABLE, messages, attachment_ext=FILE_EXT)
     
     if len(attachments) == 0:
-        auditlog.write('EMAIL RECEIVER: No inputs received\n\n')
+        auditlog.write('EMAIL HANDLER: No inputs received\n\n')
 
     for i in range(len(attachments)):
         path = f"{INFILE_DIR}/{INFILE_TEMPLATE.replace('X', str(i+1))}"
