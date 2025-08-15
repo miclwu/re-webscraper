@@ -286,8 +286,14 @@ def main(
         check_fund(item, funds_to_check, funds_to_update)
     
     if funds_to_update:
-        records_update_dbtable(conn, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'], funds_to_update)
-    
+        try:
+            records_update_dbtable(conn, FUNDS_TABLE, ['status', 'checksum', 'urls_to_check', 'access_failures'], funds_to_update)
+        except sqlite3.Error as e:
+            conn.rollback()
+            log.write(f"DATABASE ERROR: Fatal error when updating database: {e}\n\n")
+        except Exception as e:
+            log.write(f"ERROR: Occurred when updating database: {e}\n\n")
+
     if funds_to_check:
         records_to_xlsx(funds_to_check, OUTFILE_USER_PATH, OUTPUT_COLS, sheet_name='Funds to Check')
 
