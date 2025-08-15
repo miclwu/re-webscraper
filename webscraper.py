@@ -202,7 +202,7 @@ def check_fund(
 
     If page change detected, append `fund` to `funds_to_check`. Append `fund` to
     `funds_to_update` if any column in `fund` does not match the same column for the
-    version of `fund` in the database.
+    version of `fund` in the database. Does not update the database.
 
     Args:
         log: The open audit log file to write to, or None to suppress logging
@@ -238,7 +238,7 @@ def check_fund(
             print(f"{fund['name']}, {fund['status'].upper()} FUND: URL {i+1}: Failed to connect.")
         else:
             # Successful url scrape
-            # Checksum remove page whitespace, checksum remaining text and add to list
+            # Remove page whitespace, checksum remaining text and add to list
             checksums.append(hashlib.sha256(''.join(soup.body.text.split()).encode('utf-8')).hexdigest())
 
             if not old_checksums[i]:
