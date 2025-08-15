@@ -82,19 +82,19 @@ def exec_cmd(
     cmd = item.pop('command').upper()
 
     if cmd not in ('ADD', 'MOD', 'DEL', 'REQ', 'ADDU', 'DELU'):
-        log.write(f"INPUT ERROR: Invalid command: {cmd.upper()} {item['name']}\n\n")
+        log.write(f"INPUT ERROR: Invalid command: \"{cmd.upper()} {item['name']}\"\n\n")
         return
     if not item['name']:
-        log.write(f"INPUT ERROR: Empty name for command {cmd}\n\n")
+        log.write(f"INPUT ERROR: {cmd}: Empty name\n\n")
         return
-    if not item['url'] and (cmd == 'ADD' or cmd == 'MOD'):
-        log.write(f"INPUT ERROR: Empty URL for command {cmd} {item['name']}\n\n")
+    if not item['url'] and cmd == 'ADD':
+        log.write(f"INPUT ERROR: {cmd} {item['name']}: Empty URL\n\n")
         return
     if (
         (cmd in ('ADD', 'MOD') and item['status'] not in STATUSES) or 
         (cmd == 'ADDU' and item['status'] not in (True, False, 1, 0))
     ):
-        log.write(f"INPUT ERROR: Invalid status: \"{item['status']}\" for command: {cmd} {item['name']}\n\n")
+        log.write(f"INPUT ERROR: {cmd} {item['name']}: Invalid status: \"{item['status']}\"\n\n")
         return
     
     try:
@@ -106,12 +106,12 @@ def exec_cmd(
             # Precheck to catch page changes since last check
             item_old = db_get_row(conn, FUNDS_TABLE, DB_FUNDS_COLS, key='name', val=item['name'])
             if not item_old:
-                log.write(f"COMMAND ERROR: {item['name']} does not exist for command MOD\n\n")
+                log.write(f"INPUT ERROR: {item['name']} does not exist for command MOD\n\n")
                 return
             funds_to_check = []
             check_fund(item_old, funds_to_check, [])
             if funds_to_check:
-                log.write(f"WARNING: Potential change to fund {item['name']} before MOD command\n")
+                log.write(f"WARNING: Potential change to fund \"{item['name']}\" before MOD command\n")
 
             # Execute MOD
             item['checksum'] = None
