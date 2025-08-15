@@ -22,7 +22,7 @@ Commands are written in excel files (.xlsx), with each file containing 4 columns
 2. `name`: The name of the item (ie. a fund, table, or user email) targeted by the command. Always required.
 3. `url`: The url(s) of the item (ie. fund url(s)). Required by add fund (`ADD`).
     - Multiple urls may be added in each cell of the `url` column. Separate each url using ";;" as a delimiter.
-    - e.g. https://www.google.com and https://mail.google.com --> https://www.google.com;;https://mail.google.com
+    - e.g. google.com and mail.google.com --> google.com;;mail.google.com
 4. `status`: The status of the item (ie. fund status or user privilege). Required by add fund (`ADD`), modify fund (`MOD`), and add user (`ADDU`) commands.
 
 If a certain command does not require a column to be filled, the cell may be left blank. However, the column **must** still exist in the excel file, **even if the file only contains one command.**
