@@ -310,9 +310,13 @@ def main(
     """
     inputs = queue_inputs(log)
 
+    log.write('EXECUTING INPUTS\n---\n\n')
+
     table_reqs = set()
     for item in inputs:
         exec_cmd(conn, log, item, table_reqs)
+
+    log.write('---\nCHECKING FUNDS\n---\n\n')
 
     funds = util.dbtable_to_records(conn, FUNDS_TABLE)
     funds_to_check = []
