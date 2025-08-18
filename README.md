@@ -41,7 +41,7 @@ Manipulating `USERS_TABLE` (ie. "users"):
 - `ADDU`: Add a user to `USERS_TABLE`. The user email is set by the `name` field, while the user privilege / admin status is set by `status`. Requires: `name` and `status`
 - `DELU`: Delete an existing user from `USERS_TABLE`. Requires: `name`
 
-Access command:
+Access commands:
 - `REQ`: Request all data from a table in `DATABASE`. The requested table is decided by the `name` field. Fetches the most up to date version of the requested table (ie. commands after `REQ` in the input file(s) will be executed **before** the requested table is sent). Requires: `name`
 - `REQB`: Request all data from a table in the backup database `DATABASE_BACKUP`. Requires: `name`
 
@@ -73,6 +73,8 @@ Backup/restore commands:
 | ADD, MOD, DEL, etc. 	| Successful execution of the corresponding command. 	|
 | INPUT FILE ERROR 	| Input file(s) could not be located or parsed. 	|
 | INPUT ERROR 	| A command was formatted incorrectly or could not be executed. 	|
+| CHECK | Lists the name of the fund that needs to be checked.  |
+| SCRAPE FAIL   | The webscraper could not connect to the listed fund.  |
 | DATABASE ERROR 	| An error occurred while attempting to execute a database operation. 	|
 | EMAIL HANDLER 	| Message from the email handler. 	|
 | EMAIL HANDLER ERROR 	| An error occurred with the email handler. 	|
