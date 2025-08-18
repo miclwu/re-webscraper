@@ -260,7 +260,7 @@ def check_fund(
             checksums.append(old_checksums[i])
 
             if log:
-                log.write(f"SCRAPE FAIL: {fund['name']}, {urls[i]}\n\n")
+                log.write(f"SCRAPE FAIL: {fund['name']}, URL: {urls[i]}\n\n")
 
             print(f"{fund['name']}, {fund['status'].upper()} FUND: URL {i+1}: Failed to connect.")
         else:
