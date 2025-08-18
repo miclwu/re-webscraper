@@ -4,6 +4,7 @@ import sqlite3
 import pandas as pd
 import hashlib
 import os
+import shutil
 import time
 from requests.exceptions import HTTPError, Timeout
 import utilities as util
@@ -79,10 +80,10 @@ def exec_cmd(
     """
     cmd = item.pop('command').upper()
 
-    if cmd not in ('ADD', 'MOD', 'DEL', 'REQ', 'ADDU', 'DELU'):
-        log.write(f"INPUT ERROR: Invalid command: \"{cmd.upper()} {item['name']}\"\n\n")
+    if cmd not in ('ADD', 'MOD', 'DEL', 'REQ', 'REQB', 'ADDU', 'DELU', 'BACKUP', 'RESTORE'):
+        log.write(f"INPUT ERROR: Invalid command: \"{cmd} {item['name']}\"\n\n")
         return
-    if not item['name']:
+    if not item['name'] and cmd not in ('BACKUP', 'RESTORE'):
         log.write(f"INPUT ERROR: {cmd}: Empty name\n\n")
         return
     if not item['url'] and cmd == 'ADD':
@@ -133,13 +134,35 @@ def exec_cmd(
             table_reqs.add(table_name)
             log.write(f"REQ: Table \"{table_name}\"\n\n")
         
+        elif cmd == 'REQB':
+            conn_backup = sqlite3.connect(DATABASE_BACKUP)
+
+            table_name = item['name'].lower()
+            util.db_validate_table(conn_backup, table_name)
+            table_reqs.add(f"backup{DELIM}{table_name}")
+            log.write(f"REQB: Table \"{table_name}\"\n\n")
+
+            conn_backup.close()
+        
         elif cmd == 'ADDU':
             util.db_insert(conn, USERS_TABLE, {'email': item['name'], 'admin': item['status']})
             log.write(f"ADDU: {item['name']}, admin: {item['status']}\n\n")
 
-        else:   # cmd == 'DELU'
+        elif cmd == 'DELU':
             util.db_delete(conn, USERS_TABLE, key='email', val=item['name'])
             log.write(f"DELU: {item['name']}\n\n")
+
+        elif cmd == 'BACKUP':
+            conn_backup = sqlite3.connect(DATABASE_BACKUP)
+            conn.backup(conn_backup)
+            log.write(f"BACKUP: Saved backup of database\n\n")
+            conn_backup.close()
+            
+        else:   # cmd == 'RESTORE'
+            shutil.copyfile(src=DATABASE_BACKUP, dst=DATABASE)
+            table_reqs.add(FUNDS_TABLE)
+            table_reqs.add(USERS_TABLE)
+            log.write(f"RESTORE: Restored database from backup. Added database tables to output\n\n")
 
     except sqlite3.Error as e:
         conn.rollback()
@@ -315,14 +338,26 @@ def main(
     log.write(f"INFO: Funds to check: {len(funds_to_check)}/{len(funds)}\n\n")
 
     if table_reqs:
+        conn_backup = sqlite3.connect(DATABASE_BACKUP)
         with pd.ExcelWriter(OUTFILE_ADMIN_PATH, engine='openpyxl') as writer:
             if funds_to_check:
                 util.records_to_xlsx(funds_to_check, writer, OUTPUT_COLS, sheet_name='Funds to Check')
             for req in table_reqs:
-                if req == FUNDS_TABLE:
-                    util.records_to_xlsx(funds, writer, sheet_name=f"Table {FUNDS_TABLE}")
+                conn_tmp = conn
+                sheet_name = f"Table {req}"
+                table_name = str(req)
+                
+                # check if requested table is from the backup db
+                if table_name.find(f"backup{DELIM}") == 0:
+                    conn_tmp = conn_backup
+                    table_name = table_name.replace(f"backup{DELIM}", '')
+                    sheet_name = f"Backup Table {table_name}"
+
+                if req == FUNDS_TABLE and conn_tmp == conn:
+                    util.records_to_xlsx(funds, writer, sheet_name=sheet_name)
                 else:
-                    util.records_to_xlsx(util.dbtable_to_records(conn, req), writer, sheet_name=f"Table {req}")
+                    util.records_to_xlsx(util.dbtable_to_records(conn_tmp, table_name), writer, sheet_name=sheet_name)
+        conn_backup.close()
 
 if __name__ == '__main__':
     conn = sqlite3.connect(DATABASE)
