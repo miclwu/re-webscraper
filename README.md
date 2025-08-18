@@ -2,14 +2,17 @@
 
 ## Webscraper Command Cheatsheet
 
-| command 	| name           	| url                                                    	| status             	|
-|---------	|----------------	|--------------------------------------------------------	|--------------------	|
-| ADD     	| Fund name      	| URL 1<br><br>URL 1;;URL 2;; ... ;;URL N                	| Open<br><br>Closed 	|
-| MOD     	| Fund name      	| URL 1<br><br>URL 1;;URL 2;; ... ;;URL N<br><br>_EMPTY_ 	| Open<br><br>Closed 	|
-| DEL     	| Fund name      	| _EMPTY_                                                	| _EMPTY_            	|
-| REQ     	| funds<br>users 	| _EMPTY_                                                	| _EMPTY_            	|
+| command 	| name           	| url                                                    	| status             	    |
+|---------	|----------------	|--------------------------------------------------------	|--------------------	    |
+| ADD     	| Fund name      	| URL 1<br><br>URL 1;;URL 2;; ... ;;URL N                	| Open<br><br>Closed 	    |
+| MOD     	| Fund name      	| URL 1<br><br>URL 1;;URL 2;; ... ;;URL N<br><br>_EMPTY_ 	| Open<br><br>Closed 	    |
+| DEL     	| Fund name      	| _EMPTY_                                                	| _EMPTY_            	    |
+| REQ     	| funds<br>users 	| _EMPTY_                                                	| _EMPTY_            	    |
+| REQB      | funds<br>users    | _EMPTY_                                                   | _EMPTY_                   |
 | ADDU    	| User email     	| _EMPTY_                                                	| True, 1<br><br>False, 0  	|
-| DELU    	| User email     	| _EMPTY_                                                	| _EMPTY_            	|
+| DELU    	| User email     	| _EMPTY_                                                	| _EMPTY_               	|
+| BACKUP    | _EMPTY_           | _EMPTY_                                                   | _EMPTY_                   |
+| RESTORE   | _EMPTY_           | _EMPTY_                                                   | _EMPTY_                   |
 
 ## Using the Webscraper
 
@@ -40,6 +43,11 @@ Manipulating `USERS_TABLE` (ie. "users"):
 
 Access command:
 - `REQ`: Request all data from a table in `DATABASE`. The requested table is decided by the `name` field. Fetches the most up to date version of the requested table (ie. commands after `REQ` in the input file(s) will be executed **before** the requested table is sent). Requires: `name`
+- `REQB`: Request all data from a table in the backup database `DATABASE_BACKUP`. Requires: `name`
+
+Backup/restore commands:
+- `BACKUP`: Save the current state of `DATABASE` to the backup database `DATABASE_BACKUP`.
+- `RESTORE`: Load the backup `DATABASE_BACKUP` into the main `DATABASE`.
 
 ### Command Examples
 
@@ -51,9 +59,12 @@ Access command:
 | MOD 	| Search Engines 	| google.com 	| Closed 	| Modify a fund named "Search Engines", modifying "url" field and setting "status" field to "Closed". 	|
 | DEL 	| Search Engines 	| _EMPTY_ 	| _EMPTY_ 	| Delete a fund named "Google". 	|
 | REQ 	| funds 	| _EMPTY_ 	| _EMPTY_ 	| Request the table named "funds" from the database. 	|
+| REQB  | users     | _EMPTY_   | _EMPTY_   | Request the table named "users" from the backup database. |
 | ADDU 	| user@example1.test 	| _EMPTY_ 	| True 	| Add a user with admin privileges. 	|
 | ADDU 	| user@example2.test 	| _EMPTY_ 	| False 	| Add a user with normal privileges. 	|
 | DELU 	| user@example2.test 	| _EMPTY_ 	| _EMPTY_ 	| Delete a user with the matching email. 	|
+| BACKUP | _EMPTY_  | _EMPTY_   | _EMPTY_   | Backup the database.  |
+| RESTORE | _EMPTY_ | _EMPTY_   | _EMPTY_   | Restore the backup database.  |
 
 ### Understanding the Audit Log
 
