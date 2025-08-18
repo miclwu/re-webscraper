@@ -170,7 +170,7 @@ def exec_cmd(
     except util.InvalidInputError as e:
         log.write(f"INPUT ERROR: {cmd} {item['name']}: {e}\n\n")
     except Exception as e:
-        print(f"Encountered exception: {e}")
+        log.write(f"ERROR: {cmd}: {e}")
 
 def get_soup(
     url: str,
