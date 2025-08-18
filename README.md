@@ -206,6 +206,7 @@ Dependencies: `utilities.py`, `constants.py`
 ### General Constants
 
 - `DATABASE`: The sqlite3 .db file used to store data
+- `DATABASE_BACKUP`: The sqlite3 .db file used to store a backup of `DATABASE`
 - `FUNDS_TABLE`: The name of the table in `DATABASE` that stores fund data
 - `USERS_TABLE`: The name of the table in `DATABASE` that stores user emails and privilege status
 - `FILE_EXT`: The file extension of the type of files to be used in input/output (.xlsx)
@@ -259,6 +260,10 @@ The table `USERS_TABLE` stores the emails and privilege of the users it may acce
 - `id`: integer, primary key
 - `email`: text, unique, not NULL; The email address of the user
 - `admin`: boolean, default False (0); The privilege of the user. True for privileged/admin status, False for non-privileged status. 
+
+### Backup Database
+
+The backup database `DATABASE_BACKUP` will always be an exact copy of `DATABASE` from some point in time. Consequently, `DATABASE_BACKUP` also has 2 tables, `FUNDS_TABLE` and `USERS_TABLE`.
 
 ## python env
 
