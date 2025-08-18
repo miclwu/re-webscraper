@@ -2,7 +2,7 @@ import os
 
 # WEBSCRAPER CONSTANTS
 
-DATABASE = 'test.db'
+DATABASE = 'webscraper.db'
 DATABASE_BACKUP = 'backup.db'
 FUNDS_TABLE = 'funds'
 USERS_TABLE = 'users'
